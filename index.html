@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MMU IT PREP — Python Learning System</title>
+  <title>MMU IT PREP — 12-Week IT Preparation Program | ILMU NIAGA</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
+  <!-- FontAwesome Icons CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Canvas Confetti CDN for Gamification -->
+  <!-- Supabase JS Client library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Canvas Confetti CDN -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <script>
@@ -22,8 +24,9 @@
               900: '#0f172a',
               950: '#020617',
             },
-            softblue: '#eff6ff',
             accentblue: '#2563eb',
+            softblue: '#eff6ff',
+            gold: '#f59e0b',
           }
         }
       }
@@ -31,20 +34,19 @@
   </script>
 
   <style>
-    /* Custom Scrollbar for Code Blocks */
-    pre, code-lab-output {
+    pre, code, textarea {
       font-family: 'Fira Code', 'Courier New', Courier, monospace;
     }
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
     }
     ::-webkit-scrollbar-track {
       background: rgba(0,0,0,0.05);
     }
     ::-webkit-scrollbar-thumb {
       background: rgba(100,116,139,0.4);
-      border-radius: 4px;
+      border-radius: 3px;
     }
     .pulse-glow {
       animation: pulseGlow 2s infinite;
@@ -55,1444 +57,1254 @@
     }
   </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col font-sans selection:bg-blue-500 selection:text-white">
 
-  <!-- TOP BAR / HEADER -->
   <header class="bg-navy-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
       
-      <!-- Logo & Main Title -->
+      <!-- Logo & Brand -->
       <div class="flex items-center space-x-3">
-        <button id="mobileMenuBtn" class="lg:hidden text-white text-xl p-1 focus:outline-none" aria-label="Buka Menu">
+        <button id="mobileMenuBtn" class="lg:hidden text-white text-xl p-1 focus:outline-none" aria-label="Toggle Menu">
           <i class="fa-solid fa-bars"></i>
         </button>
-        <div class="flex items-center space-x-2">
-          <div class="bg-blue-600 text-white p-2 rounded-lg font-bold text-lg leading-none shadow">
+        <a href="#dashboard" class="flex items-center space-x-2">
+          <div class="bg-blue-600 text-white p-2 rounded-xl font-black text-lg leading-none shadow">
             MMU
           </div>
           <div>
-            <h1 class="font-bold text-base md:text-lg leading-tight tracking-wide">MMU IT PREP</h1>
-            <p class="text-xs text-blue-300 font-medium hidden sm:block">12-Week Preparation Program • Python System</p>
+            <h1 class="font-extrabold text-base md:text-lg leading-none tracking-wide flex items-center">
+              MMU IT PREP
+              <span class="ml-2 text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-bold">TARGET CGPA 4.00</span>
+            </h1>
+            <p class="text-[11px] text-slate-400 font-medium hidden sm:block">12-Week IT Program • Powered by <a href="https://www.ilmuniaga.com" target="_blank" rel="noopener noreferrer" class="text-blue-300 hover:underline">ILMU NIAGA</a></p>
           </div>
-        </div>
+        </a>
       </div>
 
-      <!-- Top Dashboard Info & System Actions -->
-      <div class="flex items-center space-x-3 md:space-x-6">
+      <!-- Cloud Sync Status & User Header Profile -->
+      <div class="flex items-center space-x-3 sm:space-x-4">
         
-        <!-- XP & Level Badge -->
-        <div class="flex items-center space-x-2 bg-navy-800/80 px-3 py-1.5 rounded-full border border-slate-700">
-          <i class="fa-solid fa-bolt text-amber-400 text-sm"></i>
-          <span id="headerXp" class="font-bold text-xs sm:text-sm text-amber-300">0 XP</span>
-          <span class="text-slate-500">|</span>
-          <span id="headerLevel" class="text-xs text-blue-200 font-semibold">Beginner</span>
+        <!-- Sync Indicator -->
+        <div id="cloudSyncBadge" class="hidden sm:flex items-center space-x-1.5 text-xs bg-navy-800/80 px-2.5 py-1 rounded-full border border-slate-700 text-emerald-400" title="Cloud Sync Active">
+          <i id="syncIcon" class="fa-solid fa-cloud text-xs"></i>
+          <span id="syncText" class="font-medium text-[11px]">☁️ Saved</span>
         </div>
 
-        <!-- Today Progress Display -->
-        <div class="hidden md:flex flex-col w-32">
-          <div class="flex justify-between text-xs mb-1 font-medium text-slate-300">
-            <span>Hari Ini</span>
-            <span id="headerProgressPercent">0%</span>
-          </div>
-          <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
-            <div id="headerProgressBar" class="bg-emerald-500 h-full w-0 transition-all duration-500"></div>
-          </div>
+        <!-- XP Badge -->
+        <div id="headerXpContainer" class="hidden md:flex items-center space-x-2 bg-navy-800/80 px-3 py-1 rounded-full border border-slate-700">
+          <i class="fa-solid fa-bolt text-amber-400 text-xs"></i>
+          <span id="headerXp" class="font-bold text-xs text-amber-300">0 XP</span>
+          <span class="text-slate-600">|</span>
+          <span id="headerLevel" class="text-[11px] text-blue-200 font-semibold">🌱 Beginner</span>
         </div>
 
-        <!-- Dark / Light Mode Toggle -->
-        <button id="themeToggleBtn" class="p-2 rounded-lg bg-navy-800 hover:bg-slate-700 text-slate-300 hover:text-white transition" title="Tukar Tema">
-          <i class="fa-solid fa-moon text-base dark:hidden"></i>
-          <i class="fa-solid fa-sun text-base hidden dark:block text-amber-400"></i>
+        <!-- Dark Mode Toggle -->
+        <button id="themeToggleBtn" class="p-2 rounded-lg bg-navy-800 hover:bg-slate-700 text-slate-300 hover:text-white transition text-xs" title="Tukar Tema">
+          <i class="fa-solid fa-moon dark:hidden"></i>
+          <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
         </button>
-      </div>
-    </div>
 
-    <!-- Mobile Progress Strip -->
-    <div class="md:hidden bg-navy-950 px-4 py-1.5 flex items-center justify-between text-xs border-t border-slate-800">
-      <span class="text-slate-300">Progress Hari Ini:</span>
-      <div class="flex items-center space-x-2 w-1/2">
-        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-          <div id="mobileProgressBar" class="bg-emerald-500 h-full w-0 transition-all duration-500"></div>
+        <!-- Authenticated Profile Menu Dropdown -->
+        <div id="userHeaderMenu" class="relative hidden">
+          <button id="userAvatarBtn" class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-xl text-xs font-bold transition">
+            <i class="fa-solid fa-user-astronaut text-sm"></i>
+            <span id="headerUserName" class="max-w-[100px] truncate">Student</span>
+            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+          </button>
+
+          <!-- Dropdown Popup -->
+          <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1 z-50 text-xs">
+            <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
+              <div id="dropUserEmail" class="font-semibold text-slate-700 dark:text-slate-200 truncate">student@mmu.edu.my</div>
+              <div id="dropUserPlan" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase mt-0.5">Plan: Trial</div>
+            </div>
+            <a href="#profile" class="nav-item flex items-center px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700">
+              <i class="fa-solid fa-id-card w-5"></i> Profil & Subscription
+            </a>
+            <a id="adminNavBtn" href="#admin" class="nav-item hidden items-center px-3 py-2 text-amber-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold">
+              <i class="fa-solid fa-user-shield w-5"></i> Admin Dashboard
+            </a>
+            <button id="logoutBtn" class="w-full text-left px-3 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center space-x-2 border-t border-slate-100 dark:border-slate-700 mt-1">
+              <i class="fa-solid fa-right-from-bracket w-4"></i> Logout
+            </button>
+          </div>
         </div>
-        <span id="mobileProgressPercent" class="font-bold text-emerald-400 min-w-[32px] text-right">0%</span>
+
       </div>
     </div>
   </header>
 
-  <!-- MAIN BODY LAYOUT -->
-  <div class="flex-1 flex max-w-7xl w-full mx-auto relative">
-
-    <!-- SIDEBAR NAVIGATION -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out flex flex-col top-[57px] md:top-[61px] h-[calc(100vh-61px)]">
+  <div id="authContainer" class="flex-1 flex items-center justify-center p-4 bg-gradient-to-br from-navy-950 via-slate-900 to-navy-900">
+    <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-6">
       
-      <div class="p-4 border-b border-slate-100 dark:border-slate-700 bg-blue-50/50 dark:bg-slate-800/50">
-        <div class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">Modul Pembelajaran</div>
-        <div class="font-bold text-sm text-slate-800 dark:text-slate-100">Minggu 1 • Isnin</div>
-        <div class="text-xs text-slate-500 dark:text-slate-400">Python Asas: Variable, Input & Output</div>
+      <!-- Brand Title -->
+      <div class="text-center space-y-2">
+        <div class="inline-flex items-center justify-center w-14 h-14 bg-blue-600 text-white text-2xl font-black rounded-2xl shadow-lg mb-1">
+          MMU
+        </div>
+        <h2 class="text-2xl font-black tracking-tight text-navy-900 dark:text-white">MMU IT PREP</h2>
+        <p class="text-xs text-amber-500 font-bold tracking-wider uppercase">🎯 TARGET CGPA 4.00 PREPARATION PROGRAM</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Build Strong Foundations Before University Starts</p>
       </div>
 
+      <!-- Auth Error Alert -->
+      <div id="authAlert" class="hidden p-3 rounded-xl text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200 border border-rose-200 dark:border-rose-900"></div>
+
+      <!-- FORM: LOGIN -->
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+          <input type="email" id="loginEmail" required placeholder="nama@email.com" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Password</label>
+            <button type="button" onclick="showAuthTab('forgot')" class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline">Forgot Password?</button>
+          </div>
+          <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <button type="submit" id="loginSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl shadow-lg transition flex justify-center items-center space-x-2">
+          <span>LOGIN</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+
+        <div class="text-center pt-2 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500">
+          Belum mempunyai akaun? 
+          <button type="button" onclick="showAuthTab('register')" class="text-blue-600 dark:text-blue-400 font-bold hover:underline ml-1">CREATE ACCOUNT</button>
+        </div>
+      </form>
+
+      <!-- FORM: REGISTER -->
+      <form id="registerForm" class="space-y-3.5 hidden">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nama Penuh</label>
+          <input type="text" id="regFullName" required placeholder="Ahmad Amirul" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+          <input type="email" id="regEmail" required placeholder="nama@email.com" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">No. Telefon (Opsional)</label>
+          <input type="tel" id="regPhone" placeholder="0123456789" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Password</label>
+          <input type="password" id="regPassword" required placeholder="Minimum 6 karakter" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Sahkan Password</label>
+          <input type="password" id="regConfirmPassword" required placeholder="Ulang password" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <div class="flex items-start space-x-2 pt-1">
+          <input type="checkbox" id="regTerms" required class="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+          <label for="regTerms" class="text-[11px] text-slate-500 dark:text-slate-400">Saya bersetuju dengan <a href="https://www.ilmuniaga.com" target="_blank" class="text-blue-600 hover:underline">Terms & Conditions</a> dan Privacy Policy.</label>
+        </div>
+
+        <button type="submit" id="regSubmitBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl shadow-lg transition">
+          CREATE ACCOUNT
+        </button>
+
+        <div class="text-center pt-2 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500">
+          Sudah mempunyai akaun? 
+          <button type="button" onclick="showAuthTab('login')" class="text-blue-600 dark:text-blue-400 font-bold hover:underline ml-1">LOGIN</button>
+        </div>
+      </form>
+
+      <!-- FORM: FORGOT PASSWORD -->
+      <form id="forgotForm" class="space-y-4 hidden">
+        <p class="text-xs text-slate-500 dark:text-slate-400">Masukkan email pendaftaran anda untuk menerima pautan penetapan semula password.</p>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+          <input type="email" id="forgotEmail" required placeholder="nama@email.com" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl shadow transition">
+          SEND RESET LINK
+        </button>
+
+        <div class="text-center text-xs text-slate-500">
+          <button type="button" onclick="showAuthTab('login')" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline">Kembali ke Login</button>
+        </div>
+      </form>
+
+      <!-- Commercial Branding Footer -->
+      <div class="pt-4 border-t border-slate-200 dark:border-slate-700 text-center text-[11px] text-slate-400 space-y-0.5">
+        <p>Sistem ini dibangunkan oleh <a href="https://www.ilmuniaga.com" target="_blank" rel="noopener noreferrer" class="font-bold text-blue-600 dark:text-blue-400 hover:underline">ILMU NIAGA</a></p>
+        <p><a href="https://www.ilmuniaga.com" target="_blank" rel="noopener noreferrer" class="hover:underline">www.ilmuniaga.com</a></p>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="appContainer" class="hidden flex-1 flex max-w-7xl w-full mx-auto relative">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out flex flex-col top-[53px] h-[calc(100vh-53px)]">
+      
+      <!-- Current Active Context Banner -->
+      <div class="p-4 border-b border-slate-100 dark:border-slate-700 bg-blue-50/50 dark:bg-slate-800/50">
+        <div class="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400">Sesi Pembelajaran Aktif</div>
+        <div id="sideCurWeek" class="font-bold text-sm text-slate-800 dark:text-slate-100">Week 1: Python Fundamentals</div>
+        <div id="sideCurLesson" class="text-xs text-slate-500 dark:text-slate-400">Day 1: Variable, Input & Output</div>
+      </div>
+
+      <!-- Navigation Links -->
       <nav class="flex-1 overflow-y-auto p-3 space-y-1">
-        <a href="#dashboard" class="nav-item active flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-700">
-          <i class="fa-solid fa-house w-5 text-center"></i>
+        <a href="#dashboard" class="nav-item active flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold transition text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-700">
+          <i class="fa-solid fa-house w-5 text-center text-sm"></i>
           <span>Dashboard</span>
         </a>
-        <a href="#nota" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-          <i class="fa-solid fa-book-open w-5 text-center"></i>
-          <span>Nota Pembelajaran</span>
+        <a href="#curriculum" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-map w-5 text-center text-sm"></i>
+          <span>12-Week Roadmap</span>
         </a>
-        <a href="#democode" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-          <i class="fa-solid fa-code w-5 text-center"></i>
-          <span>Demo Code Lab</span>
+        <a href="#lesson" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-book-open w-5 text-center text-sm"></i>
+          <span>Lesson Engine</span>
         </a>
-        <a href="#latihan1" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-          <i class="fa-solid fa-car-wrench w-5 text-center"></i>
-          <span>Latihan 1 — Bengkel</span>
+        <a href="#codelab" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-laptop-code w-5 text-center text-sm"></i>
+          <span>Code Lab Playground</span>
         </a>
-        <a href="#latihan2" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-          <i class="fa-solid fa-id-card w-5 text-center"></i>
-          <span>Latihan 2 — Profil</span>
+        <a href="#mission" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-bullseye w-5 text-center text-sm text-amber-500"></i>
+          <span>🎯 4.00 Mission</span>
         </a>
-        <a href="#quiz" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-          <i class="fa-solid fa-graduation-cap w-5 text-center"></i>
-          <span>Mini Quiz</span>
+        <a href="#projects" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-diagram-project w-5 text-center text-sm"></i>
+          <span>Mini Projects Center</span>
         </a>
-        <a href="#tugasan" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-          <i class="fa-solid fa-list-check w-5 text-center"></i>
-          <span>Tugasan Hari Ini</span>
+        <a href="#achievements" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-award w-5 text-center text-sm"></i>
+          <span>Lencana & Sijil</span>
         </a>
-        <a href="#progress" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-          <i class="fa-solid fa-chart-line w-5 text-center"></i>
-          <span>Progress Saya</span>
+        <a href="#profile" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-id-card w-5 text-center text-sm"></i>
+          <span>Akaun & Plan</span>
+        </a>
+        <a href="#about" class="nav-item flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-circle-info w-5 text-center text-sm"></i>
+          <span>Mengenai Platform</span>
         </a>
       </nav>
 
-      <!-- Sidebar Footer / Status -->
-      <div class="p-3 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800">
-        <div class="flex items-center justify-between">
-          <span>MMU IT Prep v1.0</span>
-          <span class="text-emerald-600 dark:text-emerald-400 font-semibold"><i class="fa-solid fa-circle text-[8px] mr-1"></i> Aktif</span>
-        </div>
+      <!-- Sidebar Commercial Footer -->
+      <div class="p-3 border-t border-slate-200 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 text-center">
+        <p>MMU IT Prep v2.0 Commercial</p>
+        <p class="text-blue-600 dark:text-blue-400 font-bold"><a href="https://www.ilmuniaga.com" target="_blank" rel="noopener noreferrer">ILMU NIAGA</a></p>
       </div>
     </aside>
 
-    <!-- Overlay backdrop for mobile menu -->
+    <!-- Overlay backdrop for mobile navigation -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/50 z-20 hidden lg:hidden"></div>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 p-4 md:p-6 lg:ml-64 overflow-y-auto max-w-full space-y-8">
+    <!-- MAIN VIEW PANELS CONTENT -->
+    <main class="flex-1 p-4 md:p-6 lg:ml-64 overflow-y-auto max-w-full space-y-6 pb-20 md:pb-12">
 
-      <!-- SECTION: DASHBOARD -->
-      <section id="dashboard-section" class="content-section block space-y-6">
+      <section id="dashboard-view" class="view-panel block space-y-6">
         
-        <!-- Welcome Card -->
-        <div class="bg-gradient-to-r from-navy-900 via-blue-900 to-indigo-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
-          <div class="absolute right-0 top-0 bottom-0 opacity-10 flex items-center pr-8 pointer-events-none">
-            <i class="fa-brands fa-python text-[180px]"></i>
-          </div>
-          <div class="relative z-10 max-w-2xl">
-            <div class="inline-flex items-center space-x-2 bg-blue-500/30 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-blue-200 border border-blue-400/30 mb-3">
-              <i class="fa-solid fa-calendar-day text-amber-400"></i>
-              <span>Minggu 1 — Isnin</span>
+        <!-- Welcome Hero Banner -->
+        <div class="bg-gradient-to-r from-navy-900 via-blue-900 to-indigo-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+          <div class="relative z-10 max-w-2xl space-y-3">
+            <div class="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 px-3 py-1 rounded-full text-xs font-bold border border-amber-500/30">
+              <i class="fa-solid fa-graduation-cap"></i>
+              <span>PREPARATION PROGRAM FOR INFORMATION TECHNOLOGY</span>
             </div>
-            <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">Python Asas — Variable, Input & Output</h2>
-            <p class="text-blue-100 text-sm md:text-base mb-6 leading-relaxed">
-              Selamat datang ke modul pertama program persediaan IT! Hari ini anda akan mempelajari asas pengaturcaraan Python daripada sifar menerusi kaedah interaktif.
+            <h2 class="text-2xl sm:text-3xl font-black tracking-tight">
+              Selamat Datang, <span id="dashWelcomeName" class="text-blue-300">Student</span>! 👋
+            </h2>
+            <p class="text-xs sm:text-sm text-blue-100 leading-relaxed">
+              Bina asas kukuh pengaturcaraan dan teknologi maklumat sebelum pengajian universiti bermula. Sasarkan CGPA 4.00 anda bermula hari ini!
             </p>
 
-            <!-- Card Progress Display -->
-            <div class="bg-navy-950/60 p-4 rounded-xl border border-blue-400/20 backdrop-blur-sm">
-              <div class="flex justify-between items-center text-xs md:text-sm font-medium mb-2">
-                <span class="text-blue-200"><i class="fa-solid fa-chart-pie mr-1 text-emerald-400"></i> Status Progress Hari Ini:</span>
-                <span id="dashProgressText" class="font-bold text-emerald-400 text-base">0%</span>
-              </div>
-              <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700">
-                <div id="dashProgressBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full w-0 transition-all duration-500"></div>
-              </div>
-              <p class="text-xs text-slate-300 mt-2 flex items-center">
-                <i class="fa-solid fa-circle-info text-amber-400 mr-1.5"></i>
-                Lengkapkan nota, latihan, quiz dan tugasan di bawah untuk mencapai 100%.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Objectives Card -->
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-          <h3 class="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center">
-            <i class="fa-solid fa-bullseye text-blue-600 mr-2"></i> Objektif Pembelajaran Hari Ini
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Selepas tamat modul ini, anda akan dapat:</p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
-              <span class="text-blue-600 dark:text-blue-400 font-bold">1.</span>
-              <span>Memahami apa itu Python & kegunaannya.</span>
-            </div>
-            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
-              <span class="text-blue-600 dark:text-blue-400 font-bold">2.</span>
-              <span>Memahami konsep Variable (pembolehubah).</span>
-            </div>
-            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
-              <span class="text-blue-600 dark:text-blue-400 font-bold">3.</span>
-              <span>Menggunakan fungsi <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded text-blue-600 dark:text-blue-300">print()</code>.</span>
-            </div>
-            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
-              <span class="text-blue-600 dark:text-blue-400 font-bold">4.</span>
-              <span>Menggunakan fungsi <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded text-blue-600 dark:text-blue-300">input()</code>.</span>
-            </div>
-            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
-              <span class="text-blue-600 dark:text-blue-400 font-bold">5.</span>
-              <span>Menyimpan data input dalam variable.</span>
-            </div>
-            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
-              <span class="text-blue-600 dark:text-blue-400 font-bold">6.</span>
-              <span>Membina program Python mudah.</span>
-            </div>
-            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
-              <span class="text-blue-600 dark:text-blue-400 font-bold">7.</span>
-              <span>Menjawab mini quiz asas Python.</span>
-            </div>
-            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
-              <span class="text-blue-600 dark:text-blue-400 font-bold">8.</span>
-              <span>Menyiapkan rekod kenderaan bengkel.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Key Golden Formula Card -->
-        <div class="bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-700/60 rounded-2xl p-6 shadow-sm">
-          <div class="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-extrabold text-sm uppercase tracking-wider mb-2">
-            <i class="fa-solid fa-key text-lg"></i>
-            <span>INGAT FORMULA UTAMA HARI INI</span>
-          </div>
-          <div class="text-center py-4 my-2 bg-white dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-amber-800/50 shadow-inner">
-            <span class="text-base sm:text-xl font-black text-navy-900 dark:text-amber-200 tracking-wide">
-              VARIABLE <i class="fa-solid fa-arrow-right mx-1 text-blue-500 text-sm"></i> INPUT <i class="fa-solid fa-arrow-right mx-1 text-blue-500 text-sm"></i> PROCESS <i class="fa-solid fa-arrow-right mx-1 text-blue-500 text-sm"></i> OUTPUT
-            </span>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mt-4">
-            <div class="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-lg border border-amber-200 dark:border-slate-700">
-              <span class="font-bold text-blue-600 dark:text-blue-400 block mb-0.5">1. Variable</span>
-              <span class="text-slate-600 dark:text-slate-300">Tempat menyimpan maklumat/data.</span>
-            </div>
-            <div class="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-lg border border-amber-200 dark:border-slate-700">
-              <span class="font-bold text-blue-600 dark:text-blue-400 block mb-0.5">2. Input</span>
-              <span class="text-slate-600 dark:text-slate-300">Maklumat yang dimasukkan oleh pengguna.</span>
-            </div>
-            <div class="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-lg border border-amber-200 dark:border-slate-700">
-              <span class="font-bold text-blue-600 dark:text-blue-400 block mb-0.5">3. Process</span>
-              <span class="text-slate-600 dark:text-slate-300">Program memproses arahan/data.</span>
-            </div>
-            <div class="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-lg border border-amber-200 dark:border-slate-700">
-              <span class="font-bold text-blue-600 dark:text-blue-400 block mb-0.5">4. Output</span>
-              <span class="text-slate-600 dark:text-slate-300">Hasil yang dipaparkan kepada pengguna.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 12-Week Roadmap Overview -->
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-bold text-navy-900 dark:text-white flex items-center">
-              <i class="fa-solid fa-map text-emerald-600 mr-2"></i> Roadmap Pembelajaran (Minggu 1)
-            </h3>
-            <span class="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-1 rounded-full font-medium">Modul Aktif: Isnin</span>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
-            <!-- Monday Active -->
-            <div class="p-3 rounded-xl border-2 border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 text-xs flex flex-col justify-between">
-              <div>
-                <div class="font-bold text-blue-700 dark:text-blue-300 mb-1 flex items-center justify-between">
-                  <span>ISNIN</span>
-                  <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
-                </div>
-                <div class="font-medium text-slate-800 dark:text-slate-200">Python Asas</div>
-                <div class="text-[10px] text-slate-500 dark:text-slate-400">Variable, Input, Output</div>
-              </div>
-              <span class="mt-2 inline-block text-[10px] bg-blue-600 text-white text-center py-0.5 rounded font-bold">Sedang Belajar</span>
-            </div>
-
-            <!-- Tuesday Locked -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
-              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
-                <span>SELASA</span>
-                <i class="fa-solid fa-lock text-slate-400"></i>
-              </div>
-              <div class="font-medium text-slate-700 dark:text-slate-300">Data Types</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">Operators & Math</div>
-              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
-            </div>
-
-            <!-- Wednesday Locked -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
-              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
-                <span>RABU</span>
-                <i class="fa-solid fa-lock text-slate-400"></i>
-              </div>
-              <div class="font-medium text-slate-700 dark:text-slate-300">Latihan Program</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">Calculation Practice</div>
-              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
-            </div>
-
-            <!-- Thursday Locked -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
-              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
-                <span>KHAMIS</span>
-                <i class="fa-solid fa-lock text-slate-400"></i>
-              </div>
-              <div class="font-medium text-slate-700 dark:text-slate-300">Type Conversion</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">int(), str(), float()</div>
-              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
-            </div>
-
-            <!-- Friday Locked -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
-              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
-                <span>JUMAAT</span>
-                <i class="fa-solid fa-lock text-slate-400"></i>
-              </div>
-              <div class="font-medium text-slate-700 dark:text-slate-300">Mini Project</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">Kalkulator Ringkas</div>
-              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
-            </div>
-
-            <!-- Saturday Locked -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
-              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
-                <span>SABTU</span>
-                <i class="fa-solid fa-lock text-slate-400"></i>
-              </div>
-              <div class="font-medium text-slate-700 dark:text-slate-300">Review & Debug</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">Pembaikan Kod</div>
-              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
-            </div>
-
-            <!-- Sunday Locked -->
-            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
-              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
-                <span>AHAD</span>
-                <i class="fa-solid fa-lock text-slate-400"></i>
-              </div>
-              <div class="font-medium text-slate-700 dark:text-slate-300">Rehat</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">Nota Ringkas</div>
-              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
-            </div>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- SECTION: NOTA PEMBELAJARAN -->
-      <section id="nota-section" class="content-section hidden space-y-6">
-        
-        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4">
-          <div>
-            <h2 class="text-2xl font-bold text-navy-900 dark:text-white">📖 Nota Pembelajaran Interaktif</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Pelajari konsep asas Python secara langkah demi langkah.</p>
-          </div>
-          <button onclick="readText('nota1Content')" class="bg-blue-100 hover:bg-blue-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-blue-700 dark:text-blue-300 text-xs px-3 py-2 rounded-lg font-semibold flex items-center space-x-1.5 transition">
-            <i class="fa-solid fa-volume-high"></i>
-            <span>🔊 Baca Nota</span>
-          </button>
-        </div>
-
-        <div id="nota1Content" class="space-y-6">
-          
-          <!-- NOTA 1: APA ITU PYTHON -->
-          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center justify-between mb-3">
-              <span class="bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-xs font-bold px-2.5 py-1 rounded">Nota 1</span>
-              <button onclick="markTaskCompleted('faham_python', 5)" class="text-xs text-slate-400 hover:text-emerald-500 transition">
-                <i class="fa-regular fa-circle-check text-base"></i> Tanda Dah Faham (+5 XP)
-              </button>
-            </div>
-            
-            <h3 class="text-xl font-bold text-navy-900 dark:text-white mb-2">Apa Itu Python?</h3>
-            <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
-              <strong class="text-blue-600 dark:text-blue-400">Python</strong> ialah bahasa pengaturcaraan (programming language) yang sangat popular, mudah dibaca, dan digunakan untuk memberi arahan terus kepada komputer.
-            </p>
-
-            <div class="bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-sm mb-3">
-              <div class="text-xs text-slate-400 mb-1 border-b border-slate-800 pb-1 flex justify-between">
-                <span>Contoh Kod Python:</span>
-                <span class="text-emerald-400">main.py</span>
-              </div>
-              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"Hello World"</span>)
-            </div>
-
-            <!-- Demo Button & Output -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-100 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 gap-2">
-              <button onclick="runDemo1()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition">
+            <div class="pt-2 flex flex-wrap gap-3">
+              <button onclick="resumeNextLesson()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-lg transition flex items-center space-x-2">
                 <i class="fa-solid fa-play"></i>
-                <span>▶ Cuba Code</span>
+                <span>CONTINUE LEARNING</span>
               </button>
-              <div id="demo1Output" class="font-mono text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-800 flex-1 sm:text-right">
-                Klik button di sebelah untuk melihat output.
-              </div>
+              <a href="#curriculum" class="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-white/20 transition">
+                Lihat Roadmap 12 Minggu
+              </a>
             </div>
+          </div>
+        </div>
 
-            <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-200 flex items-center space-x-2">
-              <i class="fa-solid fa-lightbulb text-amber-500 text-base"></i>
-              <span>Fungsi <code class="bg-blue-200 dark:bg-blue-900 px-1 py-0.5 rounded font-bold">print()</code> digunakan untuk memaparkan teks atau nilai pada skrin komputer.</span>
+        <!-- Metric Stat Cards Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+          
+          <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Overall Progress</div>
+            <div id="dashOverallProg" class="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">0%</div>
+            <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div id="dashProgBar" class="bg-blue-600 h-full w-0 transition-all duration-500"></div>
             </div>
           </div>
 
-          <!-- NOTA 2: VARIABLE -->
-          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center justify-between mb-3">
-              <span class="bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-xs font-bold px-2.5 py-1 rounded">Nota 2</span>
-              <button onclick="markTaskCompleted('faham_variable', 5)" class="text-xs text-slate-400 hover:text-emerald-500 transition">
-                <i class="fa-regular fa-circle-check text-base"></i> Tanda Dah Faham (+5 XP)
-              </button>
-            </div>
-
-            <h3 class="text-xl font-bold text-navy-900 dark:text-white mb-2">Konsep Variable (Pembolehubah)</h3>
-            
-            <!-- Analogy Box -->
-            <div class="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-xl border border-amber-200 dark:border-amber-800/50 mb-4 text-xs text-amber-900 dark:text-amber-200">
-              <div class="font-bold text-sm mb-1 flex items-center">
-                <i class="fa-solid fa-box text-amber-600 mr-2"></i> Analogi Mudah:
-              </div>
-              Bayangkan <strong>Variable</strong> seperti sebuah <strong>KOTAK</strong> yang ditampal label. Kotak ini digunakan untuk menyimpan maklumat di dalam memori komputer supaya boleh digunakan semula nanti.
-            </div>
-
-            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Contoh Variable & Nilai Dalam Python:</p>
-            
-            <div class="bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-sm mb-4">
-              <span class="text-blue-400">nama</span> = <span class="text-emerald-300">"Amirul"</span><br>
-              <span class="text-blue-400">umur</span> = <span class="text-amber-300">21</span><br>
-              <span class="text-blue-400">cgpa</span> = <span class="text-amber-300">3.68</span>
-            </div>
-
-            <!-- Visual Table -->
-            <div class="overflow-x-auto mb-4">
-              <table class="w-full text-xs text-left border-collapse">
-                <thead>
-                  <tr class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
-                    <th class="p-2 border border-slate-200 dark:border-slate-600">Variable (Nama Label Kotak)</th>
-                    <th class="p-2 border border-slate-200 dark:border-slate-600">Nilai (Kandungan Dalam Kotak)</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                  <tr class="dark:bg-slate-800"><td class="p-2 border font-mono text-blue-600 dark:text-blue-400">nama</td><td class="p-2 border font-mono">"Amirul"</td></tr>
-                  <tr class="dark:bg-slate-800"><td class="p-2 border font-mono text-blue-600 dark:text-blue-400">umur</td><td class="p-2 border font-mono">21</td></tr>
-                  <tr class="dark:bg-slate-800"><td class="p-2 border font-mono text-blue-600 dark:text-blue-400">cgpa</td><td class="p-2 border font-mono">3.68</td></tr>
-                </tbody>
-              </table>
-            </div>
-
-            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Memaparkan Isi Variable:</p>
-            <div class="bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-sm mb-3">
-              <span class="text-amber-300">print</span>(nama)<br>
-              <span class="text-amber-300">print</span>(umur)<br>
-              <span class="text-amber-300">print</span>(cgpa)
-            </div>
-
-            <!-- Rules for naming variables -->
-            <div class="mt-6 border-t border-slate-200 dark:border-slate-700 pt-4">
-              <h4 class="font-bold text-sm text-navy-900 dark:text-white mb-3">Cara Menamakan Variable</h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                <!-- Correct Examples -->
-                <div class="bg-emerald-50 dark:bg-emerald-950/30 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
-                  <div class="font-bold text-emerald-700 dark:text-emerald-400 text-xs mb-2 flex items-center">
-                    <i class="fa-solid fa-circle-check mr-1.5 text-emerald-500"></i> BETUL ✅
-                  </div>
-                  <ul class="space-y-1 font-mono text-xs text-slate-700 dark:text-slate-300">
-                    <li>nama = "Ali"</li>
-                    <li>umur = 21</li>
-                    <li>harga_servis = 150</li>
-                    <li>nombor_plat = "VAB1234"</li>
-                  </ul>
-                  <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-2">Gunakan huruf, nombor di belakang, atau underscore (_).</p>
-                </div>
-
-                <!-- Wrong Examples -->
-                <div class="bg-rose-50 dark:bg-rose-950/30 p-4 rounded-xl border border-rose-200 dark:border-rose-800/50">
-                  <div class="font-bold text-rose-700 dark:text-rose-400 text-xs mb-2 flex items-center">
-                    <i class="fa-solid fa-circle-xmark mr-1.5 text-rose-500"></i> SALAH ❌
-                  </div>
-                  <ul class="space-y-1 font-mono text-xs text-slate-700 dark:text-slate-300">
-                    <li class="line-through text-rose-600">2nama = "Ali" <span class="text-[10px] text-slate-400 font-sans">(Bermula nombor)</span></li>
-                    <li class="line-through text-rose-600">harga servis = 150 <span class="text-[10px] text-slate-400 font-sans">(Ada jarak/space)</span></li>
-                  </ul>
-                  <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-2">Dilarang mulakan dengan nombor atau mengandungi ruang jarak.</p>
-                </div>
-
-              </div>
-            </div>
-
+          <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Total XP / Level</div>
+            <div id="dashXpDisplay" class="text-xl font-black text-amber-500 mt-1">0 XP</div>
+            <div id="dashLevelDisplay" class="text-[11px] font-bold text-slate-600 dark:text-slate-300 mt-1">🌱 Beginner</div>
           </div>
 
-          <!-- NOTA 3: INPUT -->
-          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center justify-between mb-3">
-              <span class="bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-xs font-bold px-2.5 py-1 rounded">Nota 3</span>
-              <button onclick="markTaskCompleted('faham_input', 5)" class="text-xs text-slate-400 hover:text-emerald-500 transition">
-                <i class="fa-regular fa-circle-check text-base"></i> Tanda Dah Faham (+5 XP)
-              </button>
-            </div>
-
-            <h3 class="text-xl font-bold text-navy-900 dark:text-white mb-2">Menerima Input Pengguna</h3>
-            <p class="text-sm text-slate-600 dark:text-slate-300 mb-3 leading-relaxed">
-              Fungsi <code class="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded font-bold text-blue-600 dark:text-blue-300">input()</code> digunakan untuk meminta dan menerima maklumat terus daripada pengguna semasa program dijalankan.
-            </p>
-
-            <div class="bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-sm mb-4">
-              nama = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Masukkan nama anda: "</span>)
-            </div>
-
-            <!-- Interactive Simulator -->
-            <div class="bg-blue-50/70 dark:bg-slate-900/80 p-5 rounded-2xl border border-blue-200 dark:border-slate-700 space-y-3">
-              <div class="font-bold text-xs text-blue-800 dark:text-blue-300 uppercase tracking-wide flex items-center">
-                <i class="fa-solid fa-gamepad mr-2 text-blue-600"></i> Simulator Input Interaktif
-              </div>
-              
-              <div>
-                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Masukkan Nama Anda:</label>
-                <div class="flex gap-2">
-                  <input type="text" id="simInputName" placeholder="Contoh: Amirul" value="Amirul" class="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <button onclick="runInputSimulator()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition flex items-center space-x-1">
-                    <i class="fa-solid fa-play"></i>
-                    <span>Jalankan Program</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Simulator Terminal Output -->
-              <div class="bg-slate-950 rounded-xl p-3 text-xs font-mono border border-slate-800">
-                <div class="text-slate-500 text-[10px] mb-1">TERMINAL OUTPUT:</div>
-                <div id="simOutputText" class="text-emerald-400 font-bold">
-                  Selamat datang Amirul
-                </div>
-              </div>
-            </div>
-
+          <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Quiz Average</div>
+            <div id="dashQuizAvg" class="text-xl font-black text-emerald-500 mt-1">0%</div>
+            <div class="text-[10px] text-slate-400 mt-1">Berdasarkan percubaan</div>
           </div>
 
+          <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">4.00 Readiness Score</div>
+            <div id="dashReadinessScore" class="text-xl font-black text-indigo-500 mt-1">0.0%</div>
+            <div id="dashReadinessBadge" class="text-[10px] font-extrabold text-slate-400 mt-1">🔴 NEEDS WORK</div>
+          </div>
+
+        </div>
+
+        <!-- Formula Banner -->
+        <div class="bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-700/60 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-black text-xs uppercase tracking-wider mb-2">
+            <i class="fa-solid fa-key text-base"></i>
+            <span>FORMULA UTAMA ASAS IT: VARIABLE → INPUT → PROCESS → OUTPUT</span>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-300">Kuasai aliran data pemprosesan dalam ingatan komputer untuk memudahkan pemahaman bahasa pengaturcaraan seterusnya.</p>
         </div>
 
       </section>
 
-      <!-- SECTION: DEMO CODE LAB -->
-      <section id="democode-section" class="content-section hidden space-y-6">
-        
-        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
-          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">💻 Mini Code Lab Playground</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Ruang eksperimen kod Python berasaskan penyemak imbas ringkas.</p>
+      <section id="curriculum-view" class="view-panel hidden space-y-6">
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-3 flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-black text-navy-900 dark:text-white">🗺️ Curriculum Roadmap (12 Minggu / 84 Hari)</h2>
+            <p class="text-xs text-slate-500">Program lengkap susunan bersiri mengikut standar persediaan pengajian tinggi.</p>
+          </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
-          
-          <div class="flex items-center justify-between text-xs font-semibold">
-            <span class="text-slate-500 dark:text-slate-400"><i class="fa-solid fa-laptop-code text-blue-500 mr-1"></i> Editor & Simulator Kod</span>
-            <span class="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">Status: Sedia</span>
-          </div>
+        <!-- Dynamic Weeks Accordion Container -->
+        <div id="roadmapAccordion" class="space-y-4">
+          <!-- Rendered via JS -->
+        </div>
+      </section>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <section id="lesson-view" class="view-panel hidden space-y-6">
+        <div id="lessonContentContainer" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 space-y-6">
+          <!-- Rendered dynamically by loadLesson() -->
+        </div>
+      </section>
+
+      <section id="codelab-view" class="view-panel hidden space-y-6">
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-3">
+          <h2 class="text-2xl font-black text-navy-900 dark:text-white">💻 Code Lab Playground</h2>
+          <p class="text-xs text-slate-500">Tulis, uji dan paparkan hasil simulasi kod atau HTML/JS secara interaktif.</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             
-            <!-- CODE LEFT -->
-            <div class="flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-900">
+            <!-- Code Editor Box -->
+            <div class="flex flex-col rounded-2xl overflow-hidden border border-slate-800 bg-slate-900">
               <div class="bg-slate-950 px-4 py-2 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 font-mono">
-                <span>CODE (Python)</span>
-                <i class="fa-brands fa-python text-amber-400 text-base"></i>
+                <span>CODE EDITOR (Python/JS Simulator)</span>
+                <i class="fa-solid fa-code text-blue-400"></i>
               </div>
-              <div class="p-3">
-                <textarea id="labCodeArea" rows="6" class="w-full bg-transparent text-emerald-400 font-mono text-xs focus:outline-none resize-none leading-relaxed" spellcheck="false">nama = input("Masukkan nama: ")
-print("Selamat datang", nama)</textarea>
-              </div>
+              <textarea id="playgroundCode" rows="10" class="p-4 bg-transparent text-emerald-400 font-mono text-xs focus:outline-none resize-none leading-relaxed" spellcheck="false"># Program Contoh Simulator
+nama = input("Masukkan nama anda: ")
+print("Selamat datang ke MMU IT Prep,", nama)</textarea>
             </div>
 
-            <!-- OUTPUT RIGHT -->
-            <div class="flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+            <!-- Terminal Output Box -->
+            <div class="flex flex-col rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
               <div class="bg-slate-900 px-4 py-2 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 font-mono">
                 <span>OUTPUT TERMINAL</span>
-                <i class="fa-solid fa-terminal text-blue-400"></i>
+                <i class="fa-solid fa-terminal text-emerald-400"></i>
               </div>
-              <div id="labTerminalOutput" class="p-4 font-mono text-xs text-slate-200 flex-1 space-y-2">
-                <div class="text-slate-500 italic">// Tekan button "Jalankan Kod" di bawah</div>
+              <div id="playgroundOutput" class="p-4 font-mono text-xs text-slate-200 space-y-2 flex-1">
+                <div class="text-slate-500 italic">// Tekan "RUN CODE" untuk menjalankan simulasi</div>
               </div>
             </div>
 
           </div>
 
-          <!-- Code Lab Action Controls -->
           <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
             <div class="flex items-center space-x-2">
-              <label class="text-xs font-medium text-slate-600 dark:text-slate-300">Uji Nilai Input:</label>
-              <input type="text" id="labInputValue" value="Siti Saleha" class="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none">
+              <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">Simulasi Input User:</label>
+              <input type="text" id="playgroundInputValue" value="Ahmad Amirul" class="px-3 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 outline-none">
             </div>
 
-            <button onclick="runCodeLab()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md transition flex items-center space-x-2">
+            <button onclick="runPlayground()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow transition flex items-center space-x-2">
               <i class="fa-solid fa-play"></i>
-              <span>Jalankan Kod</span>
+              <span>RUN CODE</span>
             </button>
           </div>
-
         </div>
-
       </section>
 
-      <!-- SECTION: LATIHAN 1 — BENGKEL -->
-      <section id="latihan1-section" class="content-section hidden space-y-6">
-        
-        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
-          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">🚗 Latihan 1 — Sistem Bengkel Kenderaan</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Sistem pendaftaran serviced kenderaan berasaskan input dan output.</p>
+      <section id="mission-view" class="view-panel hidden space-y-6">
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-3">
+          <h2 class="text-2xl font-black text-navy-900 dark:text-white">🎯 4.00 MISSION & SKILL MASTERY</h2>
+          <p class="text-xs text-slate-500">Kadar kesediaan mengikut 7 domain pengajian IT universiti.</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          <!-- Form Input Bengkel -->
-          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
-            <h3 class="font-bold text-base text-navy-900 dark:text-white flex items-center">
-              <i class="fa-solid fa-clipboard-list text-blue-600 mr-2"></i> Borang Input Pelanggan
-            </h3>
-
-            <div class="space-y-3 text-xs">
-              <div>
-                <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Pelanggan:</label>
-                <input type="text" id="bengkelNama" value="Ahmad" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none">
-              </div>
-              <div>
-                <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Model Kereta:</label>
-                <input type="text" id="bengkelKereta" value="Honda City" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none">
-              </div>
-              <div>
-                <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Nombor Pendaftaran (Plat):</label>
-                <input type="text" id="bengkelPlat" value="VAB1234" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none">
-              </div>
-
-              <button onclick="generateBengkelRecord()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow transition flex items-center justify-center space-x-2">
-                <i class="fa-solid fa-receipt"></i>
-                <span>Generate Rekod</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Generated Record & Generated Python Code -->
-          <div class="space-y-4">
+          <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+            <h3 class="font-bold text-sm text-slate-700 dark:text-slate-200 uppercase tracking-wider">Pecahan Domain Penguasaan</h3>
             
-            <!-- Output Record -->
-            <div class="bg-slate-900 text-slate-100 rounded-2xl p-5 border border-slate-800 shadow">
-              <div class="text-xs font-bold text-amber-400 mb-2 uppercase tracking-wide border-b border-slate-800 pb-1">
-                HASIL OUTPUT REKOD SERVIS
-              </div>
-              <pre id="bengkelRecordDisplay" class="font-mono text-xs text-emerald-400 leading-relaxed whitespace-pre-wrap">----- MAKLUMAT SERVIS -----
-Pelanggan: Ahmad
-Kereta: Honda City
-No. Pendaftaran: VAB1234</pre>
-            </div>
-
-            <!-- Python Source Code Equivalent -->
-            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
-              <div class="text-xs font-bold text-blue-600 dark:text-blue-400 mb-2 uppercase tracking-wide">
-                Kod Python Yang Menghasilkan Rekod Di Atas:
-              </div>
-              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-xs font-mono overflow-x-auto leading-relaxed"><span class="text-blue-400">nama</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Nama pelanggan: "</span>)
-<span class="text-blue-400">kereta</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Model kereta: "</span>)
-<span class="text-blue-400">plat</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Nombor pendaftaran: "</span>)
-<span class="text-amber-300">print</span>(<span class="text-emerald-300">"----- MAKLUMAT SERVIS -----"</span>)
-<span class="text-amber-300">print</span>(<span class="text-emerald-300">"Pelanggan:"</span>, nama)
-<span class="text-amber-300">print</span>(<span class="text-emerald-300">"Kereta:"</span>, kereta)
-<span class="text-amber-300">print</span>(<span class="text-emerald-300">"No. Pendaftaran:"</span>, plat)</pre>
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      <!-- SECTION: LATIHAN 2 — PROFIL PELAJAR -->
-      <section id="latihan2-section" class="content-section hidden space-y-6">
-        
-        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
-          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">🎓 Latihan 2 — Profil Pelajar</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Lengkapkan ruang kosong dalam kod Python berikut untuk menghasilkan Profil Pelajar sasaran.</p>
-        </div>
-
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-6">
-          
-          <!-- Target Output -->
-          <div class="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-xl border border-blue-200 dark:border-blue-900">
-            <div class="text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-2">TARGET OUTPUT:</div>
-            <pre class="font-mono text-xs text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800">===== PROFIL PELAJAR =====
-Nama: Amirul
-Umur: 21
-Program: Information Technology
-CGPA Diploma: 3.68
-Universiti: MMU</pre>
-          </div>
-
-          <!-- Code Fill-in-the-Blanks Form -->
-          <div class="space-y-3">
-            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Pilih jawapan yang betul pada petak kosong (_____):</p>
-
-            <div class="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs leading-loose space-y-2 overflow-x-auto">
-              <div>
-                nama = 
-                <select id="blank1" class="bg-slate-800 text-amber-300 border border-slate-700 rounded px-2 py-1 focus:outline-none">
-                  <option value="">[ PILIH ]</option>
-                  <option value="print">print</option>
-                  <option value="input">input</option>
-                  <option value="nama">nama</option>
-                  <option value="umur">umur</option>
-                </select>("Masukkan nama: ")
-              </div>
-
-              <div>
-                umur = 
-                <select id="blank2" class="bg-slate-800 text-amber-300 border border-slate-700 rounded px-2 py-1 focus:outline-none">
-                  <option value="">[ PILIH ]</option>
-                  <option value="print">print</option>
-                  <option value="input">input</option>
-                  <option value="nama">nama</option>
-                  <option value="umur">umur</option>
-                </select>("Masukkan umur: ")
-              </div>
-
-              <div>
-                print("Nama:", 
-                <select id="blank3" class="bg-slate-800 text-amber-300 border border-slate-700 rounded px-2 py-1 focus:outline-none">
-                  <option value="">[ PILIH ]</option>
-                  <option value="print">print</option>
-                  <option value="input">input</option>
-                  <option value="nama">nama</option>
-                  <option value="umur">umur</option>
-                </select>)
-              </div>
-
-              <div>
-                print("Umur:", 
-                <select id="blank4" class="bg-slate-800 text-amber-300 border border-slate-700 rounded px-2 py-1 focus:outline-none">
-                  <option value="">[ PILIH ]</option>
-                  <option value="print">print</option>
-                  <option value="input">input</option>
-                  <option value="nama">nama</option>
-                  <option value="umur">umur</option>
-                </select>)
-              </div>
+            <div id="skillBarsContainer" class="space-y-3 text-xs">
+              <!-- Rendered via JS -->
             </div>
           </div>
 
-          <!-- Buttons & Feedback -->
-          <div class="space-y-3">
-            <div class="flex items-center space-x-3">
-              <button onclick="checkLatihan2()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition">
-                ✅ Semak Jawapan
-              </button>
-              <button onclick="showLatihan2Hint()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs px-4 py-2.5 rounded-xl font-medium transition">
-                💡 Dapatkan Hint
-              </button>
-            </div>
-
-            <!-- Hint Display -->
-            <div id="latihan2HintBox" class="hidden p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-900 dark:text-amber-200 text-xs rounded-xl">
-              <strong>Hint:</strong> Gunakan <code>input</code> apabila meminta maklumat daripada pengguna, dan gunakan nama <code>variable</code> apabila hendak memaparkan isinya semula.
-            </div>
-
-            <!-- Feedback Display -->
-            <div id="latihan2Feedback" class="hidden p-3 rounded-xl text-xs font-bold"></div>
-          </div>
-
-        </div>
-
-      </section>
-
-      <!-- SECTION: MINI QUIZ -->
-      <section id="quiz-section" class="content-section hidden space-y-6">
-        
-        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
-          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">🧠 Mini Quiz Python</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Uji kefahaman anda secara berperingkat satu soalan pada satu masa.</p>
-        </div>
-
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 max-w-2xl mx-auto">
-          
-          <!-- Quiz Active View -->
-          <div id="quizActiveContainer" class="space-y-6">
-            
-            <div class="flex justify-between items-center text-xs font-medium border-b border-slate-100 dark:border-slate-700 pb-3">
-              <span id="quizQuestionCount" class="text-blue-600 dark:text-blue-400 font-bold">Soalan 1 / 5</span>
-              <span id="quizScoreTracker" class="bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-full">Markah: 0</span>
-            </div>
-
-            <div class="space-y-4">
-              <h3 id="quizQuestionText" class="text-base font-bold text-navy-900 dark:text-white">
-                Loading soalan...
-              </h3>
-
-              <div id="quizOptionsContainer" class="space-y-2.5">
-                <!-- Dynamic options generated by JS -->
-              </div>
-            </div>
-
-            <div class="flex justify-between items-center pt-2">
-              <div class="text-xs text-slate-400 italic">Pilih satu jawapan tepat</div>
-              <button id="quizNextBtn" onclick="nextQuizQuestion()" disabled class="bg-blue-600 opacity-50 cursor-not-allowed hover:bg-blue-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition">
-                Seterusnya <i class="fa-solid fa-arrow-right ml-1"></i>
-              </button>
-            </div>
-
-          </div>
-
-          <!-- Quiz Result View -->
-          <div id="quizResultContainer" class="hidden text-center space-y-6 py-4">
-            
-            <div id="quizBadgeIcon" class="text-5xl mb-2">🏆</div>
-            
+          <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-4">
             <div>
-              <h3 class="text-2xl font-black text-navy-900 dark:text-white mb-1">Keputusan Quiz Anda</h3>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Syabas kerana menyelesaikan mini quiz ini!</p>
+              <h3 class="font-bold text-sm text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-2">Overall CGPA 4.00 Readiness</h3>
+              <div id="missionReadinessVal" class="text-4xl font-black text-indigo-600 dark:text-indigo-400">0.0%</div>
+              <div id="missionStatusTag" class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800">🔴 FOUNDATION NEEDS IMPROVEMENT</div>
             </div>
 
-            <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 max-w-xs mx-auto">
-              <div class="text-sm font-semibold text-slate-500 dark:text-slate-400">Markah Terkumpul:</div>
-              <div id="quizFinalMark" class="text-3xl font-black text-blue-600 dark:text-blue-400 my-1">4 / 5</div>
-              <div id="quizFinalPercent" class="text-lg font-bold text-emerald-500">80%</div>
-              <div id="quizStatusBadge" class="mt-3 inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">
-                ✅ Good
-              </div>
+            <div class="p-4 bg-blue-50 dark:bg-blue-950/40 rounded-2xl border border-blue-200 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-200">
+              <p class="font-semibold mb-1"><i class="fa-solid fa-circle-info text-amber-500 mr-1"></i> Penafian Motivasional:</p>
+              Target CGPA 4.00 ialah sasaran pembelajaran dan dorongan kecemerlangan. Platform ini tidak menjamin sebarang keputusan rasmi gred universiti.
             </div>
-
-            <button onclick="restartQuiz()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-3 rounded-xl shadow transition inline-flex items-center space-x-2">
-              <i class="fa-solid fa-rotate-right"></i>
-              <span>Ulang Quiz</span>
-            </button>
-
           </div>
 
         </div>
-
       </section>
 
-      <!-- SECTION: TUGASAN HARI INI -->
-      <section id="tugasan-section" class="content-section hidden space-y-6">
-        
-        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
-          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">🚘 Tugasan Hari Ini — Program Rekod Kenderaan</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Bina program Python yang meminta 5 maklumat kenderaan dan memaparkannya semula.</p>
+      <section id="projects-view" class="view-panel hidden space-y-6">
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-3">
+          <h2 class="text-2xl font-black text-navy-900 dark:text-white">🚀 Mini Projects & Final System</h2>
+          <p class="text-xs text-slate-500">Aplikasi praktikal berasaskan senario industri sebenar.</p>
         </div>
 
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-6">
-          
+        <div id="projectsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dynamically filled -->
+        </div>
+      </section>
+
+      <section id="achievements-view" class="view-panel hidden space-y-6">
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-3">
+          <h2 class="text-2xl font-black text-navy-900 dark:text-white">🏆 Lencana Pencapaian & Sijil</h2>
+          <p class="text-xs text-slate-500">Kumpul badge sepanjang laluan pembelajaran 12 minggu anda.</p>
+        </div>
+
+        <div id="badgesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <!-- Dynamically rendered -->
+        </div>
+      </section>
+
+      <section id="profile-view" class="view-panel hidden space-y-6">
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-3">
+          <h2 class="text-2xl font-black text-navy-900 dark:text-white">👤 Profil & Pelan Langganan</h2>
+          <p class="text-xs text-slate-500">Pengurusan akaun pengguna dan status akses cloud.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+            <h3 class="font-bold text-sm uppercase text-slate-500">Maklumat Pengguna</h3>
+            <div class="space-y-2 text-xs">
+              <div><span class="text-slate-400">Nama:</span> <strong id="profName" class="text-slate-800 dark:text-slate-200">-</strong></div>
+              <div><span class="text-slate-400">Email:</span> <strong id="profEmail" class="text-slate-800 dark:text-slate-200">-</strong></div>
+              <div><span class="text-slate-400">Telefon:</span> <strong id="profPhone" class="text-slate-800 dark:text-slate-200">-</strong></div>
+              <div><span class="text-slate-400">Tarikh Mula:</span> <strong id="profJoin" class="text-slate-800 dark:text-slate-200">-</strong></div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+            <h3 class="font-bold text-sm uppercase text-slate-500">Status Akses Langganan</h3>
+            <div class="bg-blue-50 dark:bg-blue-950/40 p-5 rounded-2xl border border-blue-200 dark:border-blue-900 space-y-2 text-xs">
+              <div>Pakej Semasa: <strong id="profPlan" class="text-blue-600 dark:text-blue-400 uppercase">TRIAL</strong></div>
+              <div>Status Akaun: <strong id="profStatus" class="text-emerald-600 uppercase">ACTIVE</strong></div>
+              <p class="text-slate-500 dark:text-slate-400 text-[11px] pt-2">Akses anda disambungkan ke Supabase Cloud Sync secara automatik.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="about-view" class="view-panel hidden space-y-6">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4 max-w-3xl">
+          <h2 class="text-2xl font-black text-navy-900 dark:text-white">ABOUT MMU IT PREP</h2>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            MMU IT PREP ialah program persediaan pembelajaran 12 minggu yang dibangunkan khusus untuk membantu pelajar membina asas pengaturcaraan, logik, pangkalan data, dan pembangunan web sebelum memulakan pengajian pengajian tinggi dalam bidang IT.
+          </p>
+
+          <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+            <div class="font-bold text-slate-800 dark:text-slate-200">Pembangun Rasmi Platform:</div>
+            <p class="text-blue-600 dark:text-blue-400 font-bold text-sm">ILMU NIAGA</p>
+            <p class="text-slate-500">Laman Web Rasmi: <a href="https://www.ilmuniaga.com" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-500">www.ilmuniaga.com</a></p>
+            <a href="https://www.ilmuniaga.com" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition">
+              VISIT ILMU NIAGA
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section id="admin-view" class="view-panel hidden space-y-6">
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-3 flex justify-between items-center">
           <div>
-            <h3 class="font-bold text-base text-navy-900 dark:text-white mb-2">Maklumat Yang Perlu Diminta Dari Pengguna:</h3>
-            <ul class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
-              <li class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-center">1. Nama Pemilik</li>
-              <li class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-center">2. Model Kereta</li>
-              <li class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-center">3. Nombor Plat</li>
-              <li class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-center">4. Tahun Kereta</li>
-              <li class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-center">5. Mileage (KM)</li>
-            </ul>
+            <h2 class="text-2xl font-black text-amber-600 dark:text-amber-400">🛡️ ADMIN DASHBOARD</h2>
+            <p class="text-xs text-slate-500">Pengurusan pengguna, status langganan dan statistik umum platform.</p>
           </div>
-
-          <!-- Target Format Box -->
-          <div class="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs border border-slate-800">
-            <div class="text-amber-400 font-bold mb-1">TARGET OUTPUT SAMBILAN:</div>
-            <pre class="text-emerald-400">========== REKOD KENDERAAN ==========
-Pemilik: Ahmad
-Model: Honda City
-No. Plat: VAB1234
-Tahun: 2022
-Mileage: 45000 KM
-======================================</pre>
-          </div>
-
-          <!-- Hints Section -->
-          <div class="space-y-3 border-t border-slate-200 dark:border-slate-700 pt-4">
-            <div class="font-bold text-xs text-slate-700 dark:text-slate-300">Tahap Bantuan / Hint Pembelajaran:</div>
-            
-            <div class="flex flex-wrap gap-2">
-              <button onclick="toggleHint(1)" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs px-3 py-1.5 rounded-lg font-medium transition">
-                💡 Hint 1
-              </button>
-              <button onclick="toggleHint(2)" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs px-3 py-1.5 rounded-lg font-medium transition">
-                💡 Hint 2
-              </button>
-              <button onclick="toggleHint(3)" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs px-3 py-1.5 rounded-lg font-medium transition">
-                💡 Hint 3
-              </button>
-            </div>
-
-            <!-- Hint Text Areas -->
-            <div id="hintBox1" class="hidden p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-900 dark:text-amber-200 text-xs rounded-xl">
-              <strong>Hint 1:</strong> Gunakan fungsi <code>input()</code> untuk meminta setiap maklumat.
-            </div>
-            <div id="hintBox2" class="hidden p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-900 dark:text-amber-200 text-xs rounded-xl">
-              <strong>Hint 2:</strong> Simpan setiap maklumat input dalam variable tersendiri seperti <code>pemilik = input(...)</code>.
-            </div>
-            <div id="hintBox3" class="hidden p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-900 dark:text-amber-200 text-xs rounded-xl">
-              <strong>Hint 3:</strong> Gunakan fungsi <code>print()</code> untuk memaparkan semula maklumat dalam format rapi.
-            </div>
-          </div>
-
-          <!-- Answer Toggle -->
-          <div class="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <button onclick="toggleTugasanAnswer()" class="bg-navy-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
-                <i class="fa-solid fa-eye"></i>
-                <span id="answerBtnText">Lihat Jawapan Kod Lengkap</span>
-              </button>
-
-              <button onclick="markTaskCompleted('tugasan', 30)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition">
-                ✅ Complete Tugasan (+30 XP)
-              </button>
-            </div>
-
-            <div id="tugasanAnswerCode" class="hidden bg-slate-950 text-slate-100 p-4 rounded-xl font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800">
-              <div class="text-slate-400 text-[10px] mb-2 border-b border-slate-800 pb-1">CONTOH KOD JAWAPAN LENGKAP:</div>
-              <span class="text-blue-400">pemilik</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Nama pemilik: "</span>)<br>
-              <span class="text-blue-400">model</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Model kereta: "</span>)<br>
-              <span class="text-blue-400">plat</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Nombor plat: "</span>)<br>
-              <span class="text-blue-400">tahun</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Tahun kereta: "</span>)<br>
-              <span class="text-blue-400">mileage</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Mileage: "</span>)<br><br>
-              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"========== REKOD KENDERAAN =========="</span>)<br>
-              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"Pemilik:"</span>, pemilik)<br>
-              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"Model:"</span>, model)<br>
-              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"No. Plat:"</span>, plat)<br>
-              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"Tahun:"</span>, tahun)<br>
-              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"Mileage:"</span>, mileage, <span class="text-emerald-300">"KM"</span>)<br>
-              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"======================================"</span>)
-            </div>
-          </div>
-
+          <span class="text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-3 py-1 rounded-full border border-amber-300">ADMIN ROLE</span>
         </div>
 
+        <!-- Admin Metrics Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+          <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div class="text-[11px] text-slate-500 font-semibold">Total Users</div>
+            <div id="admTotalUsers" class="text-2xl font-black text-navy-900 dark:text-white mt-1">0</div>
+          </div>
+          <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div class="text-[11px] text-slate-500 font-semibold">Active Access</div>
+            <div id="admActiveUsers" class="text-2xl font-black text-emerald-500 mt-1">0</div>
+          </div>
+          <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div class="text-[11px] text-slate-500 font-semibold">Trial Users</div>
+            <div id="admTrialUsers" class="text-2xl font-black text-amber-500 mt-1">0</div>
+          </div>
+          <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div class="text-[11px] text-slate-500 font-semibold">Suspended / Expired</div>
+            <div id="admOtherUsers" class="text-2xl font-black text-rose-500 mt-1">0</div>
+          </div>
+        </div>
+
+        <!-- Admin Users Table -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+          <div class="flex flex-wrap justify-between items-center gap-2">
+            <h3 class="font-bold text-sm uppercase text-slate-700 dark:text-slate-200">Senarai Pengguna Platform</h3>
+            <button onclick="loadAdminUsers()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs px-3 py-1.5 rounded-xl transition font-semibold">
+              <i class="fa-solid fa-rotate-right mr-1"></i> Refresh Users
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300">
+                  <th class="p-2.5 border-b">Nama & Email</th>
+                  <th class="p-2.5 border-b">Role</th>
+                  <th class="p-2.5 border-b">Plan</th>
+                  <th class="p-2.5 border-b">Status</th>
+                  <th class="p-2.5 border-b">Tindakan Admin</th>
+                </tr>
+              </thead>
+              <tbody id="adminUsersTableBody" class="divide-y divide-slate-200 dark:divide-slate-700">
+                <tr><td colspan="5" class="p-4 text-center text-slate-400">Loading data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
-      <!-- SECTION: PROGRESS SAYA -->
-      <section id="progress-section" class="content-section hidden space-y-6">
-        
-        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
-          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">📊 Semakan Progress Pembelajaran</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Status penyelesaian senarai tugasan modul Minggu 1 - Isnin.</p>
+      <section id="accessdenied-view" class="view-panel hidden space-y-6 text-center py-12">
+        <div class="max-w-md mx-auto bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+          <div class="text-5xl">🚫</div>
+          <h2 id="accessTitle" class="text-2xl font-black text-rose-600">ACCESS RESTRICTED</h2>
+          <p id="accessMsg" class="text-xs text-slate-500">Sila hubungi pihak pentadbir ILMU NIAGA untuk pengaktifan akaun anda.</p>
+          <a href="#dashboard" class="inline-block bg-blue-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow">Kembali ke Dashboard</a>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          <!-- Summary Card -->
-          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
-            <div>
-              <h3 class="font-bold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Ringkasan Modul</h3>
-              <div id="trackerTasksText" class="text-2xl font-black text-navy-900 dark:text-white mb-1">0 / 9 Selesai</div>
-              <div id="trackerPercentText" class="text-lg font-bold text-emerald-500">0% COMPLETE</div>
-            </div>
-
-            <div class="mt-6 space-y-2">
-              <button onclick="resetAllProgress()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900 text-xs py-2 rounded-xl font-bold transition">
-                🔄 Reset Semua Progress
-              </button>
-            </div>
-          </div>
-
-          <!-- Checklist -->
-          <div class="md:col-span-2 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
-            <h3 class="font-bold text-base text-navy-900 dark:text-white mb-2">Senarai Semak (Checklist):</h3>
-
-            <div id="checklistItems" class="space-y-2 text-xs">
-              <!-- Dynamically rendered -->
-            </div>
-          </div>
-
-        </div>
-
       </section>
 
-      <!-- FOOTER -->
+      <!-- Commercial Footer -->
       <footer class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1 pb-6">
-        <p class="font-bold text-slate-700 dark:text-slate-300">MMU IT Prep Learning System</p>
-        <p>Preparation Program for Information Technology</p>
-        <p class="text-[10px] text-slate-400">Dibangunkan khusus untuk tujuan pembelajaran interaktif pelajar sifar pengaturcaraan.</p>
+        <p class="font-bold text-slate-700 dark:text-slate-300">MMU IT PREP — 12-Week Preparation Program</p>
+        <p>🎯 Target CGPA 4.00 Preparation System</p>
+        <p class="text-[11px] text-slate-400">
+          Sistem ini dibangunkan oleh <a href="https://www.ilmuniaga.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">ILMU NIAGA</a> • <a href="https://www.ilmuniaga.com" target="_blank" rel="noopener noreferrer" class="hover:underline">www.ilmuniaga.com</a>
+        </p>
       </footer>
 
     </main>
 
   </div>
 
-  <!-- TOAST / MODAL FEEDBACK NOTIFICATION -->
+  <!-- TOAST NOTIFICATION POPUP -->
   <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
-    <div id="toastContent" class="bg-navy-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center space-x-3 text-xs">
+    <div id="toastContent" class="bg-navy-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center space-x-3 text-xs">
       <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
       <span id="toastMessage">Mesej Notifikasi</span>
     </div>
   </div>
 
-  <!-- JAVASCRIPT LOGIC -->
   <script>
-    // INITIAL SYSTEM STATE
-    const INITIAL_STATE = {
+    // ========================================
+    // SUPABASE CONFIGURATION
+    // Masukkan Project URL dan Anon Key di sini
+    // ========================================
+    const SUPABASE_URL = "https://tcuzhjopyaswpuezvshp.supabase.co/rest/v1/";
+    const SUPABASE_ANON_KEY = "sb_publishable_Wqy7aSZrvM0vMblLMWbsMg_-02aa43g";
+
+    let supabaseClient = null;
+    if (typeof supabase !== 'undefined' && SUPABASE_URL !== "YOUR_SUPABASE_URL") {
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    let currentUser = null;
+    let currentUserProfile = null;
+    let currentLessonId = "w1d1";
+
+    let appState = {
       xp: 0,
-      tasks: {
-        faham_python: false,
-        faham_variable: false,
-        faham_input: false,
-        faham_output: false,
-        demo_code: false,
-        latihan_1: false,
-        latihan_2: false,
-        mini_quiz: false,
-        tugasan: false
-      }
+      streak: 0,
+      completedLessons: {},
+      quizResults: {},
+      notes: {},
+      bookmarks: {},
+      achievements: {}
     };
 
-    let state = JSON.parse(localStorage.getItem('mmu_python_prep_state')) || INITIAL_STATE;
-
-    const TASK_KEYS = [
-      { id: 'faham_python', label: 'Faham Python (Nota 1)', xp: 5 },
-      { id: 'faham_variable', label: 'Faham Variable (Nota 2)', xp: 5 },
-      { id: 'faham_input', label: 'Faham Input (Nota 3)', xp: 5 },
-      { id: 'faham_output', label: 'Faham Output', xp: 5 },
-      { id: 'demo_code', label: 'Selesai Demo Code Lab', xp: 10 },
-      { id: 'latihan_1', label: 'Selesai Latihan 1 (Bengkel)', xp: 15 },
-      { id: 'latihan_2', label: 'Selesai Latihan 2 (Profil)', xp: 15 },
-      { id: 'mini_quiz', label: 'Selesai Mini Quiz', xp: 20 },
-      { id: 'tugasan', label: 'Selesai Tugasan Hari Ini', xp: 30 }
+    const CURRICULUM_DATA = [
+      { week: 1, title: "Python Fundamentals", topic: "Variable, Input, Output, Operators, Calculations, Debugging", days: [
+        { id: "w1d1", title: "Variable, Input & Output", type: "lesson", objectives: ["Faham Python", "Konsep Variable", "Guna print() & input()"], practice: "Bina borang pendaftaran pelajar ringkas." },
+        { id: "w1d2", title: "Data Types & Basic Math", type: "lesson", objectives: ["Integer & Float", "String concatenation", "Simbol matematik"], practice: "Bina pengira amaun jawapan matematik." },
+        { id: "w1d3", title: "Operators & Expressions", type: "lesson", objectives: ["Comparison operators", "Modulus & Exponent"], practice: "Kira baki pembahagian nombor." },
+        { id: "w1d4", title: "Type Conversion", type: "lesson", objectives: ["int()", "str()", "float()"], practice: "Tukar input string kepada nombor kalkulator." },
+        { id: "w1d5", title: "Mini Project: Calculator", type: "project", objectives: ["Bina kalkulator jumlah & purata"], practice: "Susun program kalkulator lengkap." },
+        { id: "w1d6", title: "Debugging & Syntax Error", type: "lesson", objectives: ["Identifikasi SyntaxError", "Traceback error"], practice: "Betulkan 3 kesalahan kod." },
+        { id: "w1d7", title: "Week 1 Assessment", type: "assessment", objectives: ["Ujian penilaian minggu 1"], practice: "Jawab soalan penilaian." }
+      ]},
+      { week: 2, title: "Programming Logic", topic: "if, elif, else, comparisons, logical operators, nested conditions", days: [
+        { id: "w2d1", title: "if & else Statements", type: "lesson" },
+        { id: "w2d2", title: "elif Conditions", type: "lesson" },
+        { id: "w2d3", title: "Logical Operators (and, or, not)", type: "lesson" },
+        { id: "w2d4", title: "Nested Conditions", type: "lesson" },
+        { id: "w2d5", title: "Project: Grade System", type: "project" },
+        { id: "w2d6", title: "Logic Debugging", type: "lesson" },
+        { id: "w2d7", title: "Week 2 Assessment", type: "assessment" }
+      ]},
+      { week: 3, title: "Loops & Collections", topic: "for, while, List, Tuple, Dictionary, Set", days: [
+        { id: "w3d1", title: "for Loops", type: "lesson" },
+        { id: "w3d2", title: "while Loops", type: "lesson" },
+        { id: "w3d3", title: "List Basics", type: "lesson" },
+        { id: "w3d4", title: "Dictionary & Keys", type: "lesson" },
+        { id: "w3d5", title: "Project: Inventory System", type: "project" },
+        { id: "w3d6", title: "Nested Loops", type: "lesson" },
+        { id: "w3d7", title: "Week 3 Assessment", type: "assessment" }
+      ]},
+      { week: 4, title: "Functions & Files", topic: "Functions, Parameters, Scope, File Handling, Exception Handling", days: [
+        { id: "w4d1", title: "Defining Functions", type: "lesson" },
+        { id: "w4d2", title: "Parameters & Return Values", type: "lesson" },
+        { id: "w4d3", title: "Scope (Local vs Global)", type: "lesson" },
+        { id: "w4d4", title: "File Read & Write", type: "lesson" },
+        { id: "w4d5", title: "Project: Vehicle Service Record", type: "project" },
+        { id: "w4d6", title: "Try Except Error Handling", type: "lesson" },
+        { id: "w4d7", title: "Week 4 Assessment", type: "assessment" }
+      ]},
+      { week: 5, title: "Database Fundamentals", topic: "Database, Table, Row, Column, Primary Key, SELECT, INSERT", days: [
+        { id: "w5d1", title: "Intro to Relational Database", type: "lesson" },
+        { id: "w5d2", title: "Tables, Rows & Columns", type: "lesson" },
+        { id: "w5d3", title: "Primary Key & Foreign Key", type: "lesson" },
+        { id: "w5d4", title: "SQL SELECT & WHERE", type: "lesson" },
+        { id: "w5d5", title: "SQL INSERT INTO", type: "lesson" },
+        { id: "w5d6", title: "SQL ORDER BY & LIMIT", type: "lesson" },
+        { id: "w5d7", title: "Week 5 Assessment", type: "assessment" }
+      ]},
+      { week: 6, title: "Database Management", topic: "UPDATE, DELETE, JOIN, GROUP BY, ERD Design", days: [
+        { id: "w6d1", title: "SQL UPDATE", type: "lesson" },
+        { id: "w6d2", title: "SQL DELETE", type: "lesson" },
+        { id: "w6d3", title: "SQL INNER JOIN", type: "lesson" },
+        { id: "w6d4", title: "GROUP BY & Aggregates", type: "lesson" },
+        { id: "w6d5", title: "Project: Vehicle Service Database", type: "project" },
+        { id: "w6d6", title: "Database Normalization Asas", type: "lesson" },
+        { id: "w6d7", title: "Week 6 Assessment", type: "assessment" }
+      ]},
+      { week: 7, title: "HTML & CSS Web Asas", topic: "HTML Tags, CSS Styling, Box Model, Flexbox, Responsive", days: [
+        { id: "w7d1", title: "HTML Structure & Headings", type: "lesson" },
+        { id: "w7d2", title: "Forms & Inputs HTML", type: "lesson" },
+        { id: "w7d3", title: "CSS Selectors & Styling", type: "lesson" },
+        { id: "w7d4", title: "Box Model & Flexbox", type: "lesson" },
+        { id: "w7d5", title: "Project: Personal Profile Website", type: "project" },
+        { id: "w7d6", title: "Responsive Media Queries", type: "lesson" },
+        { id: "w7d7", title: "Week 7 Assessment", type: "assessment" }
+      ]},
+      { week: 8, title: "JavaScript Asas", topic: "JS Syntax, DOM Manipulation, Event Listeners, Functions", days: [
+        { id: "w8d1", title: "JavaScript Variables & Types", type: "lesson" },
+        { id: "w8d2", title: "DOM Selection & Manipulation", type: "lesson" },
+        { id: "w8d3", title: "Click & Input Event Listeners", type: "lesson" },
+        { id: "w8d4", title: "JS Calculation Logic", type: "lesson" },
+        { id: "w8d5", title: "Project: Vehicle Service Calculator", type: "project" },
+        { id: "w8d6", title: "JS Arrays & Iteration", type: "lesson" },
+        { id: "w8d7", title: "Week 8 Assessment", type: "assessment" }
+      ]},
+      { week: 9, title: "Object-Oriented Programming (OOP)", topic: "Class, Object, Constructor, Inheritance, Encapsulation", days: [
+        { id: "w9d1", title: "Classes & Objects", type: "lesson" },
+        { id: "w9d2", title: "Constructor __init__()", type: "lesson" },
+        { id: "w9d3", title: "Methods & Self", type: "lesson" },
+        { id: "w9d4", title: "Inheritance", type: "lesson" },
+        { id: "w9d5", title: "Project: OOP Vehicle Management", type: "project" },
+        { id: "w9d6", title: "Encapsulation & Polymorphism", type: "lesson" },
+        { id: "w9d7", title: "Week 9 Assessment", type: "assessment" }
+      ]},
+      { week: 10, title: "Data Structures", topic: "Array, Stack, Queue, Searching, Sorting Algorithms", days: [
+        { id: "w10d1", title: "Arrays & Memory", type: "lesson" },
+        { id: "w10d2", title: "Stack Data Structure (LIFO)", type: "lesson" },
+        { id: "w10d3", title: "Queue Data Structure (FIFO)", type: "lesson" },
+        { id: "w10d4", title: "Linear vs Binary Search", type: "lesson" },
+        { id: "w10d5", title: "Sorting: Bubble Sort Asas", type: "lesson" },
+        { id: "w10d6", title: "Algorithm Efficiency (Big O)", type: "lesson" },
+        { id: "w10d7", title: "Week 10 Assessment", type: "assessment" }
+      ]},
+      { week: 11, title: "Discrete Mathematics", topic: "Logic Propositions, Truth Tables, Sets, Functions, Graph Theory", days: [
+        { id: "w11d1", title: "Propositions & Logic Gates", type: "lesson" },
+        { id: "w11d2", title: "Truth Tables", type: "lesson" },
+        { id: "w11d3", title: "Set Theory & Venn Diagrams", type: "lesson" },
+        { id: "w11d4", title: "Functions & Relations", type: "lesson" },
+        { id: "w11d5", title: "Graph Theory Asas", type: "lesson" },
+        { id: "w11d6", title: "Probability Basics for IT", type: "lesson" },
+        { id: "w11d7", title: "Week 11 Assessment", type: "assessment" }
+      ]},
+      { week: 12, title: "University Readiness & Capstone", topic: "Full Review, Final Mock Exam, Final Capstone System", days: [
+        { id: "w12d1", title: "Python & Logic Review", type: "lesson" },
+        { id: "w12d2", title: "Database & Web Review", type: "lesson" },
+        { id: "w12d3", title: "OOP & Data Structure Review", type: "lesson" },
+        { id: "w12d4", title: "Programming Mock Test", type: "assessment" },
+        { id: "w12d5", title: "CAPSTONE: Vehicle Service Management System", type: "project" },
+        { id: "w12d6", title: "Final Readiness Assessment", type: "assessment" },
+        { id: "w12d7", title: "🎓 COURSE COMPLETED", type: "assessment" }
+      ]}
     ];
 
-    // QUIZ DATA
-    const QUIZ_QUESTIONS = [
-      {
-        q: "Apakah fungsi print()?",
-        options: ["Menyimpan data", "Memaparkan output", "Memadam data"],
-        ans: 1
-      },
-      {
-        q: "Apakah fungsi input()?",
-        options: ["Menerima maklumat pengguna", "Membuat calculation", "Menutup program"],
-        ans: 0
-      },
-      {
-        q: "Penamaan variable yang BETUL ialah:",
-        options: ["harga servis = 100", "2harga = 100", "harga_servis = 100"],
-        ans: 2
-      },
-      {
-        q: "Apakah output bagi kod berikut?\n\nnama = \"Ali\"\nprint(\"Hello\", nama)",
-        options: ["Hello", "Ali", "Hello Ali", "Error"],
-        ans: 2
-      },
-      {
-        q: "Lengkapkan kod berikut:\n\nkereta = ______(\"Masukkan model kereta: \")",
-        options: ["print", "input", "variable", "output"],
-        ans: 1
-      }
-    ];
-
-    let currentQuizIndex = 0;
-    let quizScore = 0;
-    let selectedOptionIndex = null;
-
-    // ON DOM LOAD INITIALIZATION
     document.addEventListener('DOMContentLoaded', () => {
       initTheme();
       initNavigation();
-      initMobileMenu();
-      updateProgressUI();
-      renderChecklist();
-      initQuiz();
+      initAuthForms();
+      checkAuthSession();
     });
 
-    // SAVE STATE TO LOCALSTORAGE
-    function saveState() {
-      localStorage.setItem('mmu_python_prep_state', JSON.stringify(state));
-      updateProgressUI();
-      renderChecklist();
-    }
-
-    // THEME SETUP
     function initTheme() {
-      const themeBtn = document.getElementById('themeToggleBtn');
-      themeBtn.addEventListener('click', () => {
+      document.getElementById('themeToggleBtn').addEventListener('click', () => {
         document.documentElement.classList.toggle('dark');
       });
     }
 
-    // NAVIGATION TABS SETUP
     function initNavigation() {
-      const navLinks = document.querySelectorAll('.nav-item');
-      const sections = document.querySelectorAll('.content-section');
-
-      function navigateTo(targetHash) {
-        const cleanHash = targetHash || '#dashboard';
-        const sectionId = cleanHash.substring(1) + '-section';
-
-        sections.forEach(sec => sec.classList.add('hidden'));
-        const targetSec = document.getElementById(sectionId) || document.getElementById('dashboard-section');
-        if (targetSec) targetSec.classList.remove('hidden');
-
-        navLinks.forEach(link => {
-          if (link.getAttribute('href') === cleanHash) {
-            link.classList.add('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-slate-700');
-            link.classList.remove('text-slate-600', 'dark:text-slate-300');
-          } else {
-            link.classList.remove('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-slate-700');
-            link.classList.add('text-slate-600', 'dark:text-slate-300');
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+          const href = item.getAttribute('href');
+          if (href && href.startsWith('#')) {
+            e.preventDefault();
+            navigateToView(href.substring(1));
           }
         });
+      });
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        // Close sidebar on mobile after navigating
+      document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        document.getElementById('sidebarOverlay').classList.toggle('hidden');
+      });
+
+      document.getElementById('sidebarOverlay').addEventListener('click', () => {
         document.getElementById('sidebar').classList.add('-translate-x-full');
         document.getElementById('sidebarOverlay').classList.add('hidden');
+      });
+
+      const avatarBtn = document.getElementById('userAvatarBtn');
+      avatarBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('userDropdown').classList.toggle('hidden');
+      });
+
+      document.addEventListener('click', () => {
+        document.getElementById('userDropdown').classList.add('hidden');
+      });
+    }
+
+    function navigateToView(viewId) {
+      const views = document.querySelectorAll('.view-panel');
+      views.forEach(v => v.classList.add('hidden'));
+
+      const targetView = document.getElementById(`${viewId}-view`) || document.getElementById('dashboard-view');
+      targetView.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-item').forEach(link => {
+        if (link.getAttribute('href') === `#${viewId}`) {
+          link.classList.add('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-slate-700');
+        } else {
+          link.classList.remove('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-slate-700');
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('sidebar').classList.add('-translate-x-full');
+      document.getElementById('sidebarOverlay').classList.add('hidden');
+    }
+
+    function showAuthTab(tab) {
+      document.getElementById('authAlert').classList.add('hidden');
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('registerForm').classList.add('hidden');
+      document.getElementById('forgotForm').classList.add('hidden');
+
+      if (tab === 'register') document.getElementById('registerForm').classList.remove('hidden');
+      else if (tab === 'forgot') document.getElementById('forgotForm').classList.remove('hidden');
+      else document.getElementById('loginForm').classList.remove('hidden');
+    }
+
+    function showAuthAlert(msg, isSuccess = false) {
+      const alert = document.getElementById('authAlert');
+      alert.textContent = msg;
+      alert.className = `p-3 rounded-xl text-xs font-medium border ${isSuccess ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-rose-100 text-rose-800 border-rose-200'}`;
+      alert.classList.remove('hidden');
+    }
+
+    function initAuthForms() {
+      // Login Form Submission
+      document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        if (supabaseClient) {
+          const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (error) return showAuthAlert(error.message);
+          hydrateUserSession(data.user);
+        } else {
+          // Fallback Local Auth Simulator
+          hydrateUserSession({ id: 'local-demo-id', email, user_metadata: { full_name: email.split('@')[0] } });
+        }
+      });
+
+      // Register Form Submission
+      document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fullName = document.getElementById('regFullName').value;
+        const email = document.getElementById('regEmail').value;
+        const phone = document.getElementById('regPhone').value;
+        const password = document.getElementById('regPassword').value;
+        const confirmPass = document.getElementById('regConfirmPassword').value;
+
+        if (password !== confirmPass) return showAuthAlert('Password dan sahkan password tidak sepadan!');
+        if (password.length < 6) return showAuthAlert('Password mestilah sekurang-kurangnya 6 karakter!');
+
+        if (supabaseClient) {
+          const { data, error } = await supabaseClient.auth.signUp({
+            email,
+            password,
+            options: { data: { full_name: fullName, phone: phone } }
+          });
+          if (error) return showAuthAlert(error.message);
+          showAuthAlert('✅ Akaun berjaya didaftarkan. Sila semak email anda atau teruskan login.', true);
+        } else {
+          showAuthAlert('✅ Akaun simulasi didaftarkan! Sila klik Login.', true);
+          showAuthTab('login');
+        }
+      });
+
+      // Logout handler
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (supabaseClient) await supabaseClient.auth.signOut();
+        currentUser = null;
+        currentUserProfile = null;
+        document.getElementById('appContainer').classList.add('hidden');
+        document.getElementById('userHeaderMenu').classList.add('hidden');
+        document.getElementById('authContainer').classList.remove('hidden');
+        showToast('🔒 Anda telah berjaya logout.');
+      });
+    }
+
+    async function checkAuthSession() {
+      if (supabaseClient) {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) hydrateUserSession(session.user);
+      }
+    }
+
+    async function hydrateUserSession(user) {
+      currentUser = user;
+      document.getElementById('authContainer').classList.add('hidden');
+      document.getElementById('appContainer').classList.remove('hidden');
+      document.getElementById('userHeaderMenu').classList.remove('hidden');
+
+      const userName = user.user_metadata?.full_name || user.email.split('@')[0];
+      document.getElementById('headerUserName').textContent = userName;
+      document.getElementById('dashWelcomeName').textContent = userName;
+      document.getElementById('dropUserEmail').textContent = user.email;
+
+      // Load Profile & Progress from Supabase
+      if (supabaseClient) {
+        const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+        if (profile) {
+          currentUserProfile = profile;
+          document.getElementById('profName').textContent = profile.full_name || userName;
+          document.getElementById('profEmail').textContent = profile.email || user.email;
+          document.getElementById('profPhone').textContent = profile.phone || '-';
+          document.getElementById('profJoin').textContent = new Date(profile.created_at).toLocaleDateString('ms-MY');
+          document.getElementById('profPlan').textContent = profile.plan || 'TRIAL';
+          document.getElementById('profStatus').textContent = profile.account_status || 'ACTIVE';
+
+          if (profile.role === 'admin') {
+            document.getElementById('adminNavBtn').classList.remove('hidden');
+            loadAdminUsers();
+          }
+        }
+        await loadUserProgressCloud();
       }
 
-      navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const target = link.getAttribute('href');
-          window.location.hash = target;
-          navigateTo(target);
+      renderRoadmap();
+      renderProjects();
+      renderBadges();
+      updateDashboardMetrics();
+      loadLesson(currentLessonId);
+      showToast(`☁️ Cloud Sync Aktif: Selamat datang ${userName}!`);
+    }
+
+    async function loadUserProgressCloud() {
+      if (!supabaseClient || !currentUser) return;
+
+      try {
+        const { data: progress } = await supabaseClient.from('user_progress').select('*').eq('user_id', currentUser.id);
+        if (progress) {
+          progress.forEach(p => {
+            if (p.completed) appState.completedLessons[p.lesson_id] = true;
+          });
+        }
+
+        const { data: stats } = await supabaseClient.from('user_stats').select('*').eq('user_id', currentUser.id).single();
+        if (stats) {
+          appState.xp = stats.xp || 0;
+          appState.streak = stats.learning_streak || 0;
+        }
+      } catch (err) {
+        console.warn('Sync error, fallback to cache:', err);
+      }
+    }
+
+    async function syncCloudTask(lessonId, xpReward = 10) {
+      appState.completedLessons[lessonId] = true;
+      appState.xp += xpReward;
+
+      updateDashboardMetrics();
+
+      if (supabaseClient && currentUser) {
+        document.getElementById('syncText').textContent = '⏳ Saving...';
+        
+        await supabaseClient.from('user_progress').upsert({
+          user_id: currentUser.id,
+          lesson_id: lessonId,
+          completed: true,
+          completion_percentage: 100,
+          updated_at: new Date()
         });
-      });
 
-      if (window.location.hash) {
-        navigateTo(window.location.hash);
+        await supabaseClient.from('user_stats').upsert({
+          user_id: currentUser.id,
+          xp: appState.xp,
+          updated_at: new Date()
+        });
+
+        document.getElementById('syncText').textContent = '☁️ Saved';
       }
     }
 
-    // MOBILE MENU SIDEBAR TOGGLE
-    function initMobileMenu() {
-      const btn = document.getElementById('mobileMenuBtn');
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebarOverlay');
+    function updateDashboardMetrics() {
+      const totalLessons = 84;
+      const completedCount = Object.keys(appState.completedLessons).length;
+      const overallPercent = Math.round((completedCount / totalLessons) * 100);
 
-      btn.addEventListener('click', () => {
-        sidebar.classList.toggle('-translate-x-full');
-        overlay.classList.toggle('hidden');
-      });
+      document.getElementById('headerXp').textContent = `${appState.xp} XP`;
+      document.getElementById('dashXpDisplay').textContent = `${appState.xp} XP`;
+      document.getElementById('dashOverallProg').textContent = `${overallPercent}%`;
+      document.getElementById('dashProgBar').style.width = `${overallPercent}%`;
 
-      overlay.addEventListener('click', () => {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-      });
-    }
+      const levelTitle = getLevelTitle(appState.xp);
+      document.getElementById('headerLevel').textContent = levelTitle;
+      document.getElementById('dashLevelDisplay').textContent = levelTitle;
 
-    // UPDATE UI PROGRESS & XP
-    function updateProgressUI() {
-      const totalTasks = TASK_KEYS.length;
-      let completedCount = 0;
+      const readiness = ((overallPercent * 0.7) + (Math.min(appState.xp / 10, 30))).toFixed(1);
+      document.getElementById('dashReadinessScore').textContent = `${readiness}%`;
+      document.getElementById('missionReadinessVal').textContent = `${readiness}%`;
 
-      TASK_KEYS.forEach(task => {
-        if (state.tasks[task.id]) completedCount++;
-      });
-
-      const percentage = Math.round((completedCount / totalTasks) * 100);
-
-      // Top bar elements
-      document.getElementById('headerXp').textContent = `${state.xp} XP`;
-      document.getElementById('headerLevel').textContent = getLevelTitle(state.xp);
-      document.getElementById('headerProgressPercent').textContent = `${percentage}%`;
-      document.getElementById('headerProgressBar').style.width = `${percentage}%`;
-
-      // Mobile elements
-      document.getElementById('mobileProgressPercent').textContent = `${percentage}%`;
-      document.getElementById('mobileProgressBar').style.width = `${percentage}%`;
-
-      // Dashboard card elements
-      document.getElementById('dashProgressText').textContent = `${percentage}%`;
-      document.getElementById('dashProgressBar').style.width = `${percentage}%`;
-
-      // Progress tracker view elements
-      document.getElementById('trackerTasksText').textContent = `${completedCount} / ${totalTasks} Selesai`;
-      document.getElementById('trackerPercentText').textContent = `${percentage}% COMPLETE`;
-
-      // Trigger celebration confetti if 100% completed first time
-      if (percentage === 100 && !state.celebrated) {
-        state.celebrated = true;
-        saveState();
-        triggerConfetti();
-        showToast('🎉 Tahniah! Anda sudah melengkapkan 100% modul Hari Isnin!');
-      }
+      renderSkillBars(overallPercent);
     }
 
     function getLevelTitle(xp) {
-      if (xp >= 100) return 'Python Rookie 🚀';
-      if (xp >= 61) return 'Coder 💻';
-      if (xp >= 31) return 'Explorer 🔍';
-      return 'Beginner 🐣';
+      if (xp >= 2400) return '🏆 4.00 Challenger';
+      if (xp >= 1600) return '⭐ IT Ready';
+      if (xp >= 1000) return '🚀 Developer';
+      if (xp >= 500) return '💻 Coder';
+      if (xp >= 200) return '🔎 Explorer';
+      return '🌱 Beginner';
     }
 
-    function markTaskCompleted(taskId, xpReward) {
-      if (!state.tasks[taskId]) {
-        state.tasks[taskId] = true;
-        state.xp += xpReward;
-        saveState();
-        showToast(`✅ Tugasan diselesaikan! +${xpReward} XP`);
-      } else {
-        showToast(`i Anda sudah menyelesaikan bahagian ini sebelumnya.`);
-      }
-    }
+    function renderSkillBars(overall) {
+      const skills = [
+        { name: "Programming Fundamentals", pct: Math.min(overall + 10, 100) },
+        { name: "Problem Solving & Logic", pct: Math.min(overall + 5, 100) },
+        { name: "Database Systems (SQL)", pct: Math.max(overall - 15, 0) },
+        { name: "Web Development (HTML/CSS/JS)", pct: Math.max(overall - 20, 0) },
+        { name: "Object-Oriented Programming (OOP)", pct: Math.max(overall - 25, 0) },
+        { name: "Data Structures & Algorithms", pct: Math.max(overall - 30, 0) },
+        { name: "Discrete Mathematics", pct: Math.max(overall - 35, 0) }
+      ];
 
-    function renderChecklist() {
-      const container = document.getElementById('checklistItems');
-      container.innerHTML = '';
-
-      TASK_KEYS.forEach(task => {
-        const isDone = state.tasks[task.id];
-        const item = document.createElement('div');
-        item.className = `p-3 rounded-xl border flex items-center justify-between transition ${
-          isDone 
-            ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 text-emerald-900 dark:text-emerald-200' 
-            : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-        }`;
-
-        item.innerHTML = `
-          <div class="flex items-center space-x-3">
-            <i class="${isDone ? 'fa-solid fa-circle-check text-emerald-500 text-base' : 'fa-regular fa-circle text-slate-400 text-base'}"></i>
-            <span class="font-medium">${task.label}</span>
+      const container = document.getElementById('skillBarsContainer');
+      container.innerHTML = skills.map(s => `
+        <div>
+          <div class="flex justify-between font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <span>${s.name}</span>
+            <span class="font-bold text-blue-600 dark:text-blue-400">${s.pct}%</span>
           </div>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isDone ? 'bg-emerald-200 text-emerald-800' : 'bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-300'}">
-            +${task.xp} XP
-          </span>
-        `;
-        container.appendChild(item);
+          <div class="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+            <div class="bg-blue-600 h-full transition-all duration-500" style="width: ${s.pct}%"></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderRoadmap() {
+      const container = document.getElementById('roadmapAccordion');
+      container.innerHTML = CURRICULUM_DATA.map((w, idx) => `
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+          <div onclick="toggleWeekAccordion(${w.week})" class="p-4 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 cursor-pointer flex justify-between items-center transition">
+            <div class="flex items-center space-x-3">
+              <span class="bg-blue-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-lg">WEEKS ${w.week}</span>
+              <div>
+                <h3 class="font-bold text-sm text-navy-900 dark:text-white">${w.title}</h3>
+                <p class="text-[11px] text-slate-500">${w.topic}</p>
+              </div>
+            </div>
+            <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+          </div>
+
+          <div id="weekBody-${w.week}" class="${idx === 0 ? 'block' : 'hidden'} p-4 border-t border-slate-100 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
+            ${w.days.map(d => {
+              const isDone = appState.completedLessons[d.id];
+              return `
+                <div onclick="loadLesson('${d.id}')" class="p-2.5 rounded-xl border ${isDone ? 'bg-emerald-50 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-800' : 'bg-slate-50 border-slate-200 dark:bg-slate-700/50 dark:border-slate-700'} hover:border-blue-500 cursor-pointer transition text-xs flex flex-col justify-between h-24">
+                  <div>
+                    <div class="font-bold ${isDone ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-200'} text-[11px] truncate">${d.title}</div>
+                    <div class="text-[10px] text-slate-400 uppercase mt-0.5">${d.type}</div>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-bold ${isDone ? 'text-emerald-600' : 'text-slate-400'}">${isDone ? '✓ DONE' : 'MULA'}</span>
+                    <i class="fa-solid fa-circle-arrow-right text-blue-500"></i>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleWeekAccordion(weekNum) {
+      const elem = document.getElementById(`weekBody-${weekNum}`);
+      elem.classList.toggle('hidden');
+    }
+
+    function loadLesson(lessonId) {
+      currentLessonId = lessonId;
+      navigateToView('lesson');
+
+      let foundDay = null;
+      let foundWeek = null;
+
+      CURRICULUM_DATA.forEach(w => {
+        w.days.forEach(d => {
+          if (d.id === lessonId) {
+            foundDay = d;
+            foundWeek = w;
+          }
+        });
       });
+
+      if (!foundDay) return;
+
+      document.getElementById('sideCurWeek').textContent = `Week ${foundWeek.week}: ${foundWeek.title}`;
+      document.getElementById('sideCurLesson').textContent = foundDay.title;
+
+      const isCompleted = appState.completedLessons[lessonId];
+
+      const container = document.getElementById('lessonContentContainer');
+      container.innerHTML = `
+        <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-4">
+          <div>
+            <span class="bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 text-xs font-bold px-2.5 py-1 rounded-lg">Week ${foundWeek.week} • ${foundDay.type.toUpperCase()}</span>
+            <h2 class="text-2xl font-black text-navy-900 dark:text-white mt-2">${foundDay.title}</h2>
+          </div>
+          <button onclick="markLessonComplete('${foundDay.id}')" class="${isCompleted ? 'bg-emerald-600' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition flex items-center space-x-2">
+            <i class="fa-solid ${isCompleted ? 'fa-check-circle' : 'fa-circle-dot'}"></i>
+            <span>${isCompleted ? 'SELESAI (+20 XP)' : 'TANDA DAH FAHAM (+20 XP)'}</span>
+          </button>
+        </div>
+
+        <div class="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <h3 class="font-bold text-base text-navy-900 dark:text-white">📌 Objektif Pembelajaran Hari Ini</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            ${(foundDay.objectives || ["Memahami konsep asas", "Membina kod latihan", "Menjawab quiz ringkas"]).map(o => `<li>${o}</li>`).join('')}
+          </ul>
+
+          <div class="bg-slate-900 text-slate-100 p-4 rounded-2xl font-mono text-xs my-3 border border-slate-800">
+            <div class="text-amber-400 font-bold mb-1">// Contoh Kod Python</div>
+            <span class="text-blue-400">nama</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Masukkan nama anda: "</span>)<br>
+            <span class="text-amber-300">print</span>(<span class="text-emerald-300">"Selamat datang ke MMU IT Prep,"</span>, nama)
+          </div>
+
+          <div class="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-2xl border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200">
+            <strong>💡 Nota Utama:</strong> Fungsi <code>print()</code> paparkan data, manakala <code>input()</code> terima maklumat pengguna ke dalam pembolehubah (variable).
+          </div>
+        </div>
+
+        <!-- Mini Lesson Quiz -->
+        <div class="pt-6 border-t border-slate-100 dark:border-slate-700 space-y-3">
+          <h3 class="font-bold text-sm text-navy-900 dark:text-white">🧠 Quiz Ringkas Sub-Topik</h3>
+          <div class="bg-slate-50 dark:bg-slate-700/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+            <p class="font-semibold text-slate-800 dark:text-slate-200">Apakah kegunaan utama fungsi input() dalam Python?</p>
+            <div class="space-y-2">
+              <label class="flex items-center space-x-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+                <input type="radio" name="miniQuizOpt" value="a" class="text-blue-600">
+                <span>A. Memaparkan output di skrin</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+                <input type="radio" name="miniQuizOpt" value="b" class="text-blue-600">
+                <span>B. Menerima data masukan daripada pengguna</span>
+              </label>
+            </div>
+            <button onclick="checkMiniQuizAnswer()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition">
+              Semak Jawapan
+            </button>
+            <div id="miniQuizFeedback" class="hidden text-xs font-bold pt-1"></div>
+          </div>
+        </div>
+      `;
     }
 
-    function resetAllProgress() {
-      if (confirm('Adakah anda pasti mahu mereset semua markah dan progress anda?')) {
-        state = JSON.parse(JSON.stringify(INITIAL_STATE));
-        saveState();
-        showToast('🔄 Progress anda telah direset.');
-      }
+    function markLessonComplete(lessonId) {
+      syncCloudTask(lessonId, 20);
+      showToast('🎉 Pembelajaran hari ini diselesaikan! +20 XP');
+      renderRoadmap();
+      loadLesson(lessonId);
     }
 
-    // NOTA DEMO 1
-    function runDemo1() {
-      document.getElementById('demo1Output').textContent = 'Hello World';
-      markTaskCompleted('faham_python', 5);
-      markTaskCompleted('faham_output', 5);
-    }
+    function checkMiniQuizAnswer() {
+      const selected = document.querySelector('input[name="miniQuizOpt"]:checked');
+      const feedback = document.getElementById('miniQuizFeedback');
+      feedback.classList.remove('hidden', 'text-emerald-500', 'text-rose-500');
 
-    // INPUT SIMULATOR
-    function runInputSimulator() {
-      const val = document.getElementById('simInputName').value || 'Pelajar';
-      document.getElementById('simOutputText').textContent = `Selamat datang ${val}`;
-      markTaskCompleted('faham_input', 5);
-    }
-
-    // TEXT-TO-SPEECH (SPEECH SYNTHESIS)
-    function readText(elementId) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // stop current speech
-        const text = document.getElementById(elementId).innerText;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'ms-MY';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-        showToast('🔊 Membaca nota...');
+      if (selected && selected.value === 'b') {
+        feedback.textContent = '✅ Betul! input() menerima masukan pengguna.';
+        feedback.classList.add('text-emerald-500');
+        triggerConfetti();
       } else {
-        showToast('⚠️ Pelayar anda tidak menyokong fungsi Text-to-Speech.');
+        feedback.textContent = '❌ Kurang tepat. Cuba lagi.';
+        feedback.classList.add('text-rose-500');
       }
     }
 
-    // CODE LAB SIMULATOR
-    function runCodeLab() {
-      const code = document.getElementById('labCodeArea').value;
-      const inputVal = document.getElementById('labInputValue').value || 'Amirul';
-      const outputElem = document.getElementById('labTerminalOutput');
+    function resumeNextLesson() {
+      loadLesson(currentLessonId || 'w1d1');
+    }
 
-      outputElem.innerHTML = '';
+    function runPlayground() {
+      const code = document.getElementById('playgroundCode').value;
+      const inputVal = document.getElementById('playgroundInputValue').value || 'User';
+      const outputElem = document.getElementById('playgroundOutput');
 
-      // Simulate output line by line
       let simulatedOutput = '';
       if (code.includes('input(')) {
-        simulatedOutput += `<div class="text-slate-400">Masukkan nama: <span class="text-amber-300 font-bold">${inputVal}</span></div>`;
+        simulatedOutput += `<div class="text-slate-400">Masukkan nama anda: <span class="text-amber-300 font-bold">${inputVal}</span></div>`;
       }
       if (code.includes('print(')) {
-        simulatedOutput += `<div class="text-emerald-400 font-bold">Selamat datang ${inputVal}</div>`;
+        simulatedOutput += `<div class="text-emerald-400 font-bold">Selamat datang ke MMU IT Prep, ${inputVal}</div>`;
       }
 
-      if (!simulatedOutput) {
-        simulatedOutput = `<div class="text-rose-400">Error / Tiada fungsi print() ditemui.</div>`;
+      outputElem.innerHTML = simulatedOutput || '<div class="text-rose-400">Error / Tiada fungsi output dikesan.</div>';
+    }
+
+    function renderProjects() {
+      const projects = [
+        { name: "Simple Calculator", week: "Week 1", desc: "Aplikasi kalkulator matematik asas." },
+        { name: "Student Grade System", week: "Week 2", desc: "Pengiraan gred universiti bersyarat." },
+        { name: "Inventory Management System", week: "Week 3", desc: "Koleksi data senarai barang." },
+        { name: "Vehicle Service Record", week: "Week 4", desc: "Rekod servis kenderaan berasaskan fail." },
+        { name: "Vehicle Service Database", week: "Week 6", desc: "Skema pangkalan data servis kenderaan SQL." },
+        { name: "Personal Profile Website", week: "Week 7", desc: "Laman web profil peribadi responsif." },
+        { name: "CAPSTONE: Vehicle Management", week: "Week 12", desc: "Sistem pengurusan servis kenderaan penuh." }
+      ];
+
+      document.getElementById('projectsGrid').innerHTML = projects.map(p => `
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
+          <span class="text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded">${p.week}</span>
+          <h3 class="font-bold text-sm text-navy-900 dark:text-white">${p.name}</h3>
+          <p class="text-xs text-slate-500">${p.desc}</p>
+          <button onclick="loadLesson('w1d5')" class="mt-2 text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline">Buka Project →</button>
+        </div>
+      `).join('');
+    }
+
+    function renderBadges() {
+      const badges = [
+        { title: "First Code", icon: "🌱", done: true },
+        { title: "Python Starter", icon: "🐍", done: appState.xp >= 50 },
+        { title: "Logic Master", icon: "🧠", done: appState.xp >= 200 },
+        { title: "Loop Master", icon: "🔄", done: appState.xp >= 500 },
+        { title: "Database Explorer", icon: "🗄️", done: appState.xp >= 1000 },
+        { title: "MMU IT Ready", icon: "🏆", done: appState.xp >= 2400 }
+      ];
+
+      document.getElementById('badgesGrid').innerHTML = badges.map(b => `
+        <div class="p-4 rounded-2xl border text-center ${b.done ? 'bg-amber-50 border-amber-300 dark:bg-amber-950/30' : 'bg-slate-50 border-slate-200 opacity-50'} shadow-sm">
+          <div class="text-3xl mb-1">${b.icon}</div>
+          <div class="font-bold text-xs text-slate-800 dark:text-slate-200">${b.title}</div>
+          <span class="text-[10px] font-bold ${b.done ? 'text-amber-600' : 'text-slate-400'}">${b.done ? 'EARNED' : 'LOCKED'}</span>
+        </div>
+      `).join('');
+    }
+
+    async function loadAdminUsers() {
+      if (!supabaseClient) return;
+
+      const { data: users } = await supabaseClient.from('profiles').select('*');
+      const tbody = document.getElementById('adminUsersTableBody');
+
+      if (!users || users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Tiada pengguna ditemui.</td></tr>`;
+        return;
       }
 
-      outputElem.innerHTML = simulatedOutput;
-      markTaskCompleted('demo_code', 10);
+      document.getElementById('admTotalUsers').textContent = users.length;
+      document.getElementById('admActiveUsers').textContent = users.filter(u => u.account_status === 'active').length;
+      document.getElementById('admTrialUsers').textContent = users.filter(u => u.account_status === 'trial').length;
+      document.getElementById('admOtherUsers').textContent = users.filter(u => u.account_status === 'suspended' || u.account_status === 'expired').length;
+
+      tbody.innerHTML = users.map(u => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+          <td class="p-2.5">
+            <div class="font-bold text-slate-800 dark:text-slate-200">${u.full_name || 'N/A'}</div>
+            <div class="text-[11px] text-slate-400">${u.email}</div>
+          </td>
+          <td class="p-2.5"><span class="font-bold uppercase ${u.role === 'admin' ? 'text-amber-500' : 'text-slate-500'}">${u.role || 'student'}</span></td>
+          <td class="p-2.5"><span class="uppercase font-semibold">${u.plan || 'trial'}</span></td>
+          <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${u.account_status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${(u.account_status || 'trial').toUpperCase()}</span></td>
+          <td class="p-2.5 space-x-1">
+            <button onclick="updateUserStatusAdmin('${u.id}', 'active')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px] font-bold">ACTIVATE</button>
+            <button onclick="updateUserStatusAdmin('${u.id}', 'suspended')" class="bg-rose-600 text-white px-2 py-1 rounded text-[10px] font-bold">SUSPEND</button>
+          </td>
+        </tr>
+      `).join('');
     }
 
-    // LATIHAN 1: BENGKEL RECORD GENERATOR
-    function generateBengkelRecord() {
-      const nama = document.getElementById('bengkelNama').value || 'Ahmad';
-      const kereta = document.getElementById('bengkelKereta').value || 'Honda City';
-      const plat = document.getElementById('bengkelPlat').value || 'VAB1234';
+    async function updateUserStatusAdmin(userId, status) {
+      if (!confirm(`Adakah anda pasti mahu menukar status pengguna ini kepada ${status}?`)) return;
 
-      const recordText = `----- MAKLUMAT SERVIS -----\nPelanggan: ${nama}\nKereta: ${kereta}\nNo. Pendaftaran: ${plat}`;
-      
-      document.getElementById('bengkelRecordDisplay').textContent = recordText;
-      markTaskCompleted('latihan_1', 15);
-    }
-
-    // LATIHAN 2: PROFIL CHECKER
-    function checkLatihan2() {
-      const b1 = document.getElementById('blank1').value;
-      const b2 = document.getElementById('blank2').value;
-      const b3 = document.getElementById('blank3').value;
-      const b4 = document.getElementById('blank4').value;
-
-      const feedback = document.getElementById('latihan2Feedback');
-      feedback.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800');
-
-      if (b1 === 'input' && b2 === 'input' && b3 === 'nama' && b4 === 'umur') {
-        feedback.classList.add('bg-emerald-100', 'text-emerald-800');
-        feedback.textContent = '✅ Bagus! Jawapan anda betul sepenuhnya.';
-        markTaskCompleted('latihan_2', 15);
-      } else {
-        feedback.classList.add('bg-rose-100', 'text-rose-800');
-        feedback.textContent = '❌ Cuba lagi. Perhatikan fungsi input() dan pembolehubah yang betul.';
-      }
-    }
-
-    function showLatihan2Hint() {
-      document.getElementById('latihan2HintBox').classList.toggle('hidden');
-    }
-
-    // MINI QUIZ LOGIC
-    function initQuiz() {
-      currentQuizIndex = 0;
-      quizScore = 0;
-      selectedOptionIndex = null;
-      renderQuizQuestion();
-    }
-
-    function renderQuizQuestion() {
-      const qData = QUIZ_QUESTIONS[currentQuizIndex];
-      document.getElementById('quizQuestionCount').textContent = `Soalan ${currentQuizIndex + 1} / ${QUIZ_QUESTIONS.length}`;
-      document.getElementById('quizScoreTracker').textContent = `Markah: ${quizScore}`;
-      document.getElementById('quizQuestionText').innerText = qData.q;
-
-      const optionsContainer = document.getElementById('quizOptionsContainer');
-      optionsContainer.innerHTML = '';
-
-      qData.options.forEach((opt, idx) => {
-        const btn = document.createElement('button');
-        btn.className = `w-full text-left p-3 rounded-xl border text-xs font-medium transition flex items-center justify-between ${
-          selectedOptionIndex === idx 
-            ? 'bg-blue-100 border-blue-500 text-blue-900 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-400' 
-            : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
-        }`;
-        btn.innerHTML = `
-          <span>${String.fromCharCode(65 + idx)}. ${opt}</span>
-          <i class="${selectedOptionIndex === idx ? 'fa-solid fa-circle-dot text-blue-600' : 'fa-regular fa-circle text-slate-400'}"></i>
-        `;
-        btn.onclick = () => selectQuizOption(idx);
-        optionsContainer.appendChild(btn);
-      });
-
-      const nextBtn = document.getElementById('quizNextBtn');
-      if (selectedOptionIndex !== null) {
-        nextBtn.disabled = false;
-        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-      } else {
-        nextBtn.disabled = true;
-        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
-      }
-    }
-
-    function selectQuizOption(idx) {
-      selectedOptionIndex = idx;
-      renderQuizQuestion();
-    }
-
-    function nextQuizQuestion() {
-      const qData = QUIZ_QUESTIONS[currentQuizIndex];
-      if (selectedOptionIndex === qData.ans) {
-        quizScore++;
-      }
-
-      selectedOptionIndex = null;
-      currentQuizIndex++;
-
-      if (currentQuizIndex < QUIZ_QUESTIONS.length) {
-        renderQuizQuestion();
-      } else {
-        finishQuiz();
+      if (supabaseClient) {
+        await supabaseClient.from('profiles').update({ account_status: status }).eq('id', userId);
+        showToast(`✅ Status pengguna dikemaskini kepada ${status}`);
+        loadAdminUsers();
       }
     }
 
-    function finishQuiz() {
-      document.getElementById('quizActiveContainer').classList.add('hidden');
-      const resultContainer = document.getElementById('quizResultContainer');
-      resultContainer.classList.remove('hidden');
-
-      const total = QUIZ_QUESTIONS.length;
-      const percentage = Math.round((quizScore / total) * 100);
-
-      document.getElementById('quizFinalMark').textContent = `${quizScore} / ${total}`;
-      document.getElementById('quizFinalPercent').textContent = `${percentage}%`;
-
-      const badgeElem = document.getElementById('quizStatusBadge');
-      const iconElem = document.getElementById('quizBadgeIcon');
-
-      if (percentage >= 90) {
-        badgeElem.className = 'mt-3 inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-300';
-        badgeElem.textContent = '🏆 Excellent';
-        iconElem.textContent = '🏆';
-      } else if (percentage >= 70) {
-        badgeElem.className = 'mt-3 inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300';
-        badgeElem.textContent = '✅ Good';
-        iconElem.textContent = '🌟';
-      } else if (percentage >= 50) {
-        badgeElem.className = 'mt-3 inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-300';
-        badgeElem.textContent = '🟡 Perlu Ulang Kaji';
-        iconElem.textContent = '📖';
-      } else {
-        badgeElem.className = 'mt-3 inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800 border border-rose-300';
-        badgeElem.textContent = '🔴 Cuba Lagi';
-        iconElem.textContent = '💪';
-      }
-
-      markTaskCompleted('mini_quiz', 20);
-    }
-
-    function restartQuiz() {
-      document.getElementById('quizResultContainer').classList.add('hidden');
-      document.getElementById('quizActiveContainer').classList.remove('hidden');
-      initQuiz();
-    }
-
-    // TUGASAN HINTS & ANSWER TOGGLES
-    function toggleHint(level) {
-      const elem = document.getElementById(`hintBox${level}`);
-      if (elem) elem.classList.toggle('hidden');
-    }
-
-    function toggleTugasanAnswer() {
-      const codeArea = document.getElementById('tugasanAnswerCode');
-      const btnText = document.getElementById('answerBtnText');
-
-      if (codeArea.classList.contains('hidden')) {
-        codeArea.classList.remove('hidden');
-        btnText.textContent = 'Sembunyikan Jawapan';
-      } else {
-        codeArea.classList.add('hidden');
-        btnText.textContent = 'Lihat Jawapan Kod Lengkap';
-      }
-    }
-
-    // CONFETTI ANIMATION EFFECT
     function triggerConfetti() {
-      if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 120,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      }
+      if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     }
 
-    // TOAST NOTIFICATION FUNCTION
-    function showToast(message) {
+    function showToast(msg) {
       const toast = document.getElementById('toastNotification');
-      const msgElem = document.getElementById('toastMessage');
-
-      msgElem.textContent = message;
+      document.getElementById('toastMessage').textContent = msg;
       toast.classList.remove('translate-y-20', 'opacity-0');
       toast.classList.add('translate-y-0', 'opacity-100');
-
       setTimeout(() => {
         toast.classList.remove('translate-y-0', 'opacity-100');
         toast.classList.add('translate-y-20', 'opacity-0');
