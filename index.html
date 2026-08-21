@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="ms" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MMU IT PREP — Python Learning System</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Canvas Confetti CDN for Gamification -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            navy: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            },
+            softblue: '#eff6ff',
+            accentblue: '#2563eb',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar for Code Blocks */
+    pre, code-lab-output {
+      font-family: 'Fira Code', 'Courier New', Courier, monospace;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.05);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100,116,139,0.4);
+      border-radius: 4px;
+    }
+    .pulse-glow {
+      animation: pulseGlow 2s infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(37, 99, 235, 0.3); }
+      50% { box-shadow: 0 0 25px rgba(37, 99, 235, 0.6); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col font-sans">
+
+  <!-- TOP BAR / HEADER -->
+  <header class="bg-navy-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      
+      <!-- Logo & Main Title -->
+      <div class="flex items-center space-x-3">
+        <button id="mobileMenuBtn" class="lg:hidden text-white text-xl p-1 focus:outline-none" aria-label="Buka Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="flex items-center space-x-2">
+          <div class="bg-blue-600 text-white p-2 rounded-lg font-bold text-lg leading-none shadow">
+            MMU
+          </div>
+          <div>
+            <h1 class="font-bold text-base md:text-lg leading-tight tracking-wide">MMU IT PREP</h1>
+            <p class="text-xs text-blue-300 font-medium hidden sm:block">12-Week Preparation Program • Python System</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Dashboard Info & System Actions -->
+      <div class="flex items-center space-x-3 md:space-x-6">
+        
+        <!-- XP & Level Badge -->
+        <div class="flex items-center space-x-2 bg-navy-800/80 px-3 py-1.5 rounded-full border border-slate-700">
+          <i class="fa-solid fa-bolt text-amber-400 text-sm"></i>
+          <span id="headerXp" class="font-bold text-xs sm:text-sm text-amber-300">0 XP</span>
+          <span class="text-slate-500">|</span>
+          <span id="headerLevel" class="text-xs text-blue-200 font-semibold">Beginner</span>
+        </div>
+
+        <!-- Today Progress Display -->
+        <div class="hidden md:flex flex-col w-32">
+          <div class="flex justify-between text-xs mb-1 font-medium text-slate-300">
+            <span>Hari Ini</span>
+            <span id="headerProgressPercent">0%</span>
+          </div>
+          <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+            <div id="headerProgressBar" class="bg-emerald-500 h-full w-0 transition-all duration-500"></div>
+          </div>
+        </div>
+
+        <!-- Dark / Light Mode Toggle -->
+        <button id="themeToggleBtn" class="p-2 rounded-lg bg-navy-800 hover:bg-slate-700 text-slate-300 hover:text-white transition" title="Tukar Tema">
+          <i class="fa-solid fa-moon text-base dark:hidden"></i>
+          <i class="fa-solid fa-sun text-base hidden dark:block text-amber-400"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Progress Strip -->
+    <div class="md:hidden bg-navy-950 px-4 py-1.5 flex items-center justify-between text-xs border-t border-slate-800">
+      <span class="text-slate-300">Progress Hari Ini:</span>
+      <div class="flex items-center space-x-2 w-1/2">
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div id="mobileProgressBar" class="bg-emerald-500 h-full w-0 transition-all duration-500"></div>
+        </div>
+        <span id="mobileProgressPercent" class="font-bold text-emerald-400 min-w-[32px] text-right">0%</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN BODY LAYOUT -->
+  <div class="flex-1 flex max-w-7xl w-full mx-auto relative">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out flex flex-col top-[57px] md:top-[61px] h-[calc(100vh-61px)]">
+      
+      <div class="p-4 border-b border-slate-100 dark:border-slate-700 bg-blue-50/50 dark:bg-slate-800/50">
+        <div class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">Modul Pembelajaran</div>
+        <div class="font-bold text-sm text-slate-800 dark:text-slate-100">Minggu 1 • Isnin</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">Python Asas: Variable, Input & Output</div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+        <a href="#dashboard" class="nav-item active flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-700">
+          <i class="fa-solid fa-house w-5 text-center"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#nota" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-book-open w-5 text-center"></i>
+          <span>Nota Pembelajaran</span>
+        </a>
+        <a href="#democode" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-code w-5 text-center"></i>
+          <span>Demo Code Lab</span>
+        </a>
+        <a href="#latihan1" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-car-wrench w-5 text-center"></i>
+          <span>Latihan 1 — Bengkel</span>
+        </a>
+        <a href="#latihan2" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-id-card w-5 text-center"></i>
+          <span>Latihan 2 — Profil</span>
+        </a>
+        <a href="#quiz" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-graduation-cap w-5 text-center"></i>
+          <span>Mini Quiz</span>
+        </a>
+        <a href="#tugasan" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-list-check w-5 text-center"></i>
+          <span>Tugasan Hari Ini</span>
+        </a>
+        <a href="#progress" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+          <i class="fa-solid fa-chart-line w-5 text-center"></i>
+          <span>Progress Saya</span>
+        </a>
+      </nav>
+
+      <!-- Sidebar Footer / Status -->
+      <div class="p-3 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800">
+        <div class="flex items-center justify-between">
+          <span>MMU IT Prep v1.0</span>
+          <span class="text-emerald-600 dark:text-emerald-400 font-semibold"><i class="fa-solid fa-circle text-[8px] mr-1"></i> Aktif</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Overlay backdrop for mobile menu -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/50 z-20 hidden lg:hidden"></div>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 p-4 md:p-6 lg:ml-64 overflow-y-auto max-w-full space-y-8">
+
+      <!-- SECTION: DASHBOARD -->
+      <section id="dashboard-section" class="content-section block space-y-6">
+        
+        <!-- Welcome Card -->
+        <div class="bg-gradient-to-r from-navy-900 via-blue-900 to-indigo-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
+          <div class="absolute right-0 top-0 bottom-0 opacity-10 flex items-center pr-8 pointer-events-none">
+            <i class="fa-brands fa-python text-[180px]"></i>
+          </div>
+          <div class="relative z-10 max-w-2xl">
+            <div class="inline-flex items-center space-x-2 bg-blue-500/30 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold text-blue-200 border border-blue-400/30 mb-3">
+              <i class="fa-solid fa-calendar-day text-amber-400"></i>
+              <span>Minggu 1 — Isnin</span>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">Python Asas — Variable, Input & Output</h2>
+            <p class="text-blue-100 text-sm md:text-base mb-6 leading-relaxed">
+              Selamat datang ke modul pertama program persediaan IT! Hari ini anda akan mempelajari asas pengaturcaraan Python daripada sifar menerusi kaedah interaktif.
+            </p>
+
+            <!-- Card Progress Display -->
+            <div class="bg-navy-950/60 p-4 rounded-xl border border-blue-400/20 backdrop-blur-sm">
+              <div class="flex justify-between items-center text-xs md:text-sm font-medium mb-2">
+                <span class="text-blue-200"><i class="fa-solid fa-chart-pie mr-1 text-emerald-400"></i> Status Progress Hari Ini:</span>
+                <span id="dashProgressText" class="font-bold text-emerald-400 text-base">0%</span>
+              </div>
+              <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                <div id="dashProgressBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full w-0 transition-all duration-500"></div>
+              </div>
+              <p class="text-xs text-slate-300 mt-2 flex items-center">
+                <i class="fa-solid fa-circle-info text-amber-400 mr-1.5"></i>
+                Lengkapkan nota, latihan, quiz dan tugasan di bawah untuk mencapai 100%.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Objectives Card -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+          <h3 class="text-lg font-bold text-navy-900 dark:text-white mb-4 flex items-center">
+            <i class="fa-solid fa-bullseye text-blue-600 mr-2"></i> Objektif Pembelajaran Hari Ini
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Selepas tamat modul ini, anda akan dapat:</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
+              <span class="text-blue-600 dark:text-blue-400 font-bold">1.</span>
+              <span>Memahami apa itu Python & kegunaannya.</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
+              <span class="text-blue-600 dark:text-blue-400 font-bold">2.</span>
+              <span>Memahami konsep Variable (pembolehubah).</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
+              <span class="text-blue-600 dark:text-blue-400 font-bold">3.</span>
+              <span>Menggunakan fungsi <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded text-blue-600 dark:text-blue-300">print()</code>.</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
+              <span class="text-blue-600 dark:text-blue-400 font-bold">4.</span>
+              <span>Menggunakan fungsi <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded text-blue-600 dark:text-blue-300">input()</code>.</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
+              <span class="text-blue-600 dark:text-blue-400 font-bold">5.</span>
+              <span>Menyimpan data input dalam variable.</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
+              <span class="text-blue-600 dark:text-blue-400 font-bold">6.</span>
+              <span>Membina program Python mudah.</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
+              <span class="text-blue-600 dark:text-blue-400 font-bold">7.</span>
+              <span>Menjawab mini quiz asas Python.</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700 text-xs font-medium flex items-start space-x-2">
+              <span class="text-blue-600 dark:text-blue-400 font-bold">8.</span>
+              <span>Menyiapkan rekod kenderaan bengkel.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Key Golden Formula Card -->
+        <div class="bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-700/60 rounded-2xl p-6 shadow-sm">
+          <div class="flex items-center space-x-2 text-amber-800 dark:text-amber-300 font-extrabold text-sm uppercase tracking-wider mb-2">
+            <i class="fa-solid fa-key text-lg"></i>
+            <span>INGAT FORMULA UTAMA HARI INI</span>
+          </div>
+          <div class="text-center py-4 my-2 bg-white dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-amber-800/50 shadow-inner">
+            <span class="text-base sm:text-xl font-black text-navy-900 dark:text-amber-200 tracking-wide">
+              VARIABLE <i class="fa-solid fa-arrow-right mx-1 text-blue-500 text-sm"></i> INPUT <i class="fa-solid fa-arrow-right mx-1 text-blue-500 text-sm"></i> PROCESS <i class="fa-solid fa-arrow-right mx-1 text-blue-500 text-sm"></i> OUTPUT
+            </span>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mt-4">
+            <div class="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-lg border border-amber-200 dark:border-slate-700">
+              <span class="font-bold text-blue-600 dark:text-blue-400 block mb-0.5">1. Variable</span>
+              <span class="text-slate-600 dark:text-slate-300">Tempat menyimpan maklumat/data.</span>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-lg border border-amber-200 dark:border-slate-700">
+              <span class="font-bold text-blue-600 dark:text-blue-400 block mb-0.5">2. Input</span>
+              <span class="text-slate-600 dark:text-slate-300">Maklumat yang dimasukkan oleh pengguna.</span>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-lg border border-amber-200 dark:border-slate-700">
+              <span class="font-bold text-blue-600 dark:text-blue-400 block mb-0.5">3. Process</span>
+              <span class="text-slate-600 dark:text-slate-300">Program memproses arahan/data.</span>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-800/80 p-2.5 rounded-lg border border-amber-200 dark:border-slate-700">
+              <span class="font-bold text-blue-600 dark:text-blue-400 block mb-0.5">4. Output</span>
+              <span class="text-slate-600 dark:text-slate-300">Hasil yang dipaparkan kepada pengguna.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 12-Week Roadmap Overview -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-navy-900 dark:text-white flex items-center">
+              <i class="fa-solid fa-map text-emerald-600 mr-2"></i> Roadmap Pembelajaran (Minggu 1)
+            </h3>
+            <span class="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-1 rounded-full font-medium">Modul Aktif: Isnin</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
+            <!-- Monday Active -->
+            <div class="p-3 rounded-xl border-2 border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 text-xs flex flex-col justify-between">
+              <div>
+                <div class="font-bold text-blue-700 dark:text-blue-300 mb-1 flex items-center justify-between">
+                  <span>ISNIN</span>
+                  <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
+                </div>
+                <div class="font-medium text-slate-800 dark:text-slate-200">Python Asas</div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400">Variable, Input, Output</div>
+              </div>
+              <span class="mt-2 inline-block text-[10px] bg-blue-600 text-white text-center py-0.5 rounded font-bold">Sedang Belajar</span>
+            </div>
+
+            <!-- Tuesday Locked -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
+              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
+                <span>SELASA</span>
+                <i class="fa-solid fa-lock text-slate-400"></i>
+              </div>
+              <div class="font-medium text-slate-700 dark:text-slate-300">Data Types</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">Operators & Math</div>
+              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
+            </div>
+
+            <!-- Wednesday Locked -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
+              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
+                <span>RABU</span>
+                <i class="fa-solid fa-lock text-slate-400"></i>
+              </div>
+              <div class="font-medium text-slate-700 dark:text-slate-300">Latihan Program</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">Calculation Practice</div>
+              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
+            </div>
+
+            <!-- Thursday Locked -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
+              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
+                <span>KHAMIS</span>
+                <i class="fa-solid fa-lock text-slate-400"></i>
+              </div>
+              <div class="font-medium text-slate-700 dark:text-slate-300">Type Conversion</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">int(), str(), float()</div>
+              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
+            </div>
+
+            <!-- Friday Locked -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
+              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
+                <span>JUMAAT</span>
+                <i class="fa-solid fa-lock text-slate-400"></i>
+              </div>
+              <div class="font-medium text-slate-700 dark:text-slate-300">Mini Project</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">Kalkulator Ringkas</div>
+              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
+            </div>
+
+            <!-- Saturday Locked -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
+              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
+                <span>SABTU</span>
+                <i class="fa-solid fa-lock text-slate-400"></i>
+              </div>
+              <div class="font-medium text-slate-700 dark:text-slate-300">Review & Debug</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">Pembaikan Kod</div>
+              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
+            </div>
+
+            <!-- Sunday Locked -->
+            <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs opacity-75">
+              <div class="font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between items-center">
+                <span>AHAD</span>
+                <i class="fa-solid fa-lock text-slate-400"></i>
+              </div>
+              <div class="font-medium text-slate-700 dark:text-slate-300">Rehat</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400">Nota Ringkas</div>
+              <span class="mt-2 block text-[10px] text-slate-400 font-semibold">🔒 Belum Dibuka</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- SECTION: NOTA PEMBELAJARAN -->
+      <section id="nota-section" class="content-section hidden space-y-6">
+        
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4">
+          <div>
+            <h2 class="text-2xl font-bold text-navy-900 dark:text-white">📖 Nota Pembelajaran Interaktif</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Pelajari konsep asas Python secara langkah demi langkah.</p>
+          </div>
+          <button onclick="readText('nota1Content')" class="bg-blue-100 hover:bg-blue-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-blue-700 dark:text-blue-300 text-xs px-3 py-2 rounded-lg font-semibold flex items-center space-x-1.5 transition">
+            <i class="fa-solid fa-volume-high"></i>
+            <span>🔊 Baca Nota</span>
+          </button>
+        </div>
+
+        <div id="nota1Content" class="space-y-6">
+          
+          <!-- NOTA 1: APA ITU PYTHON -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between mb-3">
+              <span class="bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-xs font-bold px-2.5 py-1 rounded">Nota 1</span>
+              <button onclick="markTaskCompleted('faham_python', 5)" class="text-xs text-slate-400 hover:text-emerald-500 transition">
+                <i class="fa-regular fa-circle-check text-base"></i> Tanda Dah Faham (+5 XP)
+              </button>
+            </div>
+            
+            <h3 class="text-xl font-bold text-navy-900 dark:text-white mb-2">Apa Itu Python?</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
+              <strong class="text-blue-600 dark:text-blue-400">Python</strong> ialah bahasa pengaturcaraan (programming language) yang sangat popular, mudah dibaca, dan digunakan untuk memberi arahan terus kepada komputer.
+            </p>
+
+            <div class="bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-sm mb-3">
+              <div class="text-xs text-slate-400 mb-1 border-b border-slate-800 pb-1 flex justify-between">
+                <span>Contoh Kod Python:</span>
+                <span class="text-emerald-400">main.py</span>
+              </div>
+              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"Hello World"</span>)
+            </div>
+
+            <!-- Demo Button & Output -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-100 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 gap-2">
+              <button onclick="runDemo1()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center justify-center space-x-2 transition">
+                <i class="fa-solid fa-play"></i>
+                <span>▶ Cuba Code</span>
+              </button>
+              <div id="demo1Output" class="font-mono text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-950 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-800 flex-1 sm:text-right">
+                Klik button di sebelah untuk melihat output.
+              </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-200 flex items-center space-x-2">
+              <i class="fa-solid fa-lightbulb text-amber-500 text-base"></i>
+              <span>Fungsi <code class="bg-blue-200 dark:bg-blue-900 px-1 py-0.5 rounded font-bold">print()</code> digunakan untuk memaparkan teks atau nilai pada skrin komputer.</span>
+            </div>
+          </div>
+
+          <!-- NOTA 2: VARIABLE -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between mb-3">
+              <span class="bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-xs font-bold px-2.5 py-1 rounded">Nota 2</span>
+              <button onclick="markTaskCompleted('faham_variable', 5)" class="text-xs text-slate-400 hover:text-emerald-500 transition">
+                <i class="fa-regular fa-circle-check text-base"></i> Tanda Dah Faham (+5 XP)
+              </button>
+            </div>
+
+            <h3 class="text-xl font-bold text-navy-900 dark:text-white mb-2">Konsep Variable (Pembolehubah)</h3>
+            
+            <!-- Analogy Box -->
+            <div class="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-xl border border-amber-200 dark:border-amber-800/50 mb-4 text-xs text-amber-900 dark:text-amber-200">
+              <div class="font-bold text-sm mb-1 flex items-center">
+                <i class="fa-solid fa-box text-amber-600 mr-2"></i> Analogi Mudah:
+              </div>
+              Bayangkan <strong>Variable</strong> seperti sebuah <strong>KOTAK</strong> yang ditampal label. Kotak ini digunakan untuk menyimpan maklumat di dalam memori komputer supaya boleh digunakan semula nanti.
+            </div>
+
+            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Contoh Variable & Nilai Dalam Python:</p>
+            
+            <div class="bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-sm mb-4">
+              <span class="text-blue-400">nama</span> = <span class="text-emerald-300">"Amirul"</span><br>
+              <span class="text-blue-400">umur</span> = <span class="text-amber-300">21</span><br>
+              <span class="text-blue-400">cgpa</span> = <span class="text-amber-300">3.68</span>
+            </div>
+
+            <!-- Visual Table -->
+            <div class="overflow-x-auto mb-4">
+              <table class="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                    <th class="p-2 border border-slate-200 dark:border-slate-600">Variable (Nama Label Kotak)</th>
+                    <th class="p-2 border border-slate-200 dark:border-slate-600">Nilai (Kandungan Dalam Kotak)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                  <tr class="dark:bg-slate-800"><td class="p-2 border font-mono text-blue-600 dark:text-blue-400">nama</td><td class="p-2 border font-mono">"Amirul"</td></tr>
+                  <tr class="dark:bg-slate-800"><td class="p-2 border font-mono text-blue-600 dark:text-blue-400">umur</td><td class="p-2 border font-mono">21</td></tr>
+                  <tr class="dark:bg-slate-800"><td class="p-2 border font-mono text-blue-600 dark:text-blue-400">cgpa</td><td class="p-2 border font-mono">3.68</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Memaparkan Isi Variable:</p>
+            <div class="bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-sm mb-3">
+              <span class="text-amber-300">print</span>(nama)<br>
+              <span class="text-amber-300">print</span>(umur)<br>
+              <span class="text-amber-300">print</span>(cgpa)
+            </div>
+
+            <!-- Rules for naming variables -->
+            <div class="mt-6 border-t border-slate-200 dark:border-slate-700 pt-4">
+              <h4 class="font-bold text-sm text-navy-900 dark:text-white mb-3">Cara Menamakan Variable</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- Correct Examples -->
+                <div class="bg-emerald-50 dark:bg-emerald-950/30 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
+                  <div class="font-bold text-emerald-700 dark:text-emerald-400 text-xs mb-2 flex items-center">
+                    <i class="fa-solid fa-circle-check mr-1.5 text-emerald-500"></i> BETUL ✅
+                  </div>
+                  <ul class="space-y-1 font-mono text-xs text-slate-700 dark:text-slate-300">
+                    <li>nama = "Ali"</li>
+                    <li>umur = 21</li>
+                    <li>harga_servis = 150</li>
+                    <li>nombor_plat = "VAB1234"</li>
+                  </ul>
+                  <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-2">Gunakan huruf, nombor di belakang, atau underscore (_).</p>
+                </div>
+
+                <!-- Wrong Examples -->
+                <div class="bg-rose-50 dark:bg-rose-950/30 p-4 rounded-xl border border-rose-200 dark:border-rose-800/50">
+                  <div class="font-bold text-rose-700 dark:text-rose-400 text-xs mb-2 flex items-center">
+                    <i class="fa-solid fa-circle-xmark mr-1.5 text-rose-500"></i> SALAH ❌
+                  </div>
+                  <ul class="space-y-1 font-mono text-xs text-slate-700 dark:text-slate-300">
+                    <li class="line-through text-rose-600">2nama = "Ali" <span class="text-[10px] text-slate-400 font-sans">(Bermula nombor)</span></li>
+                    <li class="line-through text-rose-600">harga servis = 150 <span class="text-[10px] text-slate-400 font-sans">(Ada jarak/space)</span></li>
+                  </ul>
+                  <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-2">Dilarang mulakan dengan nombor atau mengandungi ruang jarak.</p>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- NOTA 3: INPUT -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between mb-3">
+              <span class="bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-xs font-bold px-2.5 py-1 rounded">Nota 3</span>
+              <button onclick="markTaskCompleted('faham_input', 5)" class="text-xs text-slate-400 hover:text-emerald-500 transition">
+                <i class="fa-regular fa-circle-check text-base"></i> Tanda Dah Faham (+5 XP)
+              </button>
+            </div>
+
+            <h3 class="text-xl font-bold text-navy-900 dark:text-white mb-2">Menerima Input Pengguna</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 mb-3 leading-relaxed">
+              Fungsi <code class="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded font-bold text-blue-600 dark:text-blue-300">input()</code> digunakan untuk meminta dan menerima maklumat terus daripada pengguna semasa program dijalankan.
+            </p>
+
+            <div class="bg-slate-900 text-slate-100 rounded-xl p-4 font-mono text-sm mb-4">
+              nama = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Masukkan nama anda: "</span>)
+            </div>
+
+            <!-- Interactive Simulator -->
+            <div class="bg-blue-50/70 dark:bg-slate-900/80 p-5 rounded-2xl border border-blue-200 dark:border-slate-700 space-y-3">
+              <div class="font-bold text-xs text-blue-800 dark:text-blue-300 uppercase tracking-wide flex items-center">
+                <i class="fa-solid fa-gamepad mr-2 text-blue-600"></i> Simulator Input Interaktif
+              </div>
+              
+              <div>
+                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Masukkan Nama Anda:</label>
+                <div class="flex gap-2">
+                  <input type="text" id="simInputName" placeholder="Contoh: Amirul" value="Amirul" class="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <button onclick="runInputSimulator()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition flex items-center space-x-1">
+                    <i class="fa-solid fa-play"></i>
+                    <span>Jalankan Program</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Simulator Terminal Output -->
+              <div class="bg-slate-950 rounded-xl p-3 text-xs font-mono border border-slate-800">
+                <div class="text-slate-500 text-[10px] mb-1">TERMINAL OUTPUT:</div>
+                <div id="simOutputText" class="text-emerald-400 font-bold">
+                  Selamat datang Amirul
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- SECTION: DEMO CODE LAB -->
+      <section id="democode-section" class="content-section hidden space-y-6">
+        
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
+          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">💻 Mini Code Lab Playground</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Ruang eksperimen kod Python berasaskan penyemak imbas ringkas.</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+          
+          <div class="flex items-center justify-between text-xs font-semibold">
+            <span class="text-slate-500 dark:text-slate-400"><i class="fa-solid fa-laptop-code text-blue-500 mr-1"></i> Editor & Simulator Kod</span>
+            <span class="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">Status: Sedia</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- CODE LEFT -->
+            <div class="flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-900">
+              <div class="bg-slate-950 px-4 py-2 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 font-mono">
+                <span>CODE (Python)</span>
+                <i class="fa-brands fa-python text-amber-400 text-base"></i>
+              </div>
+              <div class="p-3">
+                <textarea id="labCodeArea" rows="6" class="w-full bg-transparent text-emerald-400 font-mono text-xs focus:outline-none resize-none leading-relaxed" spellcheck="false">nama = input("Masukkan nama: ")
+print("Selamat datang", nama)</textarea>
+              </div>
+            </div>
+
+            <!-- OUTPUT RIGHT -->
+            <div class="flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div class="bg-slate-900 px-4 py-2 border-b border-slate-800 flex justify-between items-center text-xs text-slate-400 font-mono">
+                <span>OUTPUT TERMINAL</span>
+                <i class="fa-solid fa-terminal text-blue-400"></i>
+              </div>
+              <div id="labTerminalOutput" class="p-4 font-mono text-xs text-slate-200 flex-1 space-y-2">
+                <div class="text-slate-500 italic">// Tekan button "Jalankan Kod" di bawah</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Code Lab Action Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div class="flex items-center space-x-2">
+              <label class="text-xs font-medium text-slate-600 dark:text-slate-300">Uji Nilai Input:</label>
+              <input type="text" id="labInputValue" value="Siti Saleha" class="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none">
+            </div>
+
+            <button onclick="runCodeLab()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md transition flex items-center space-x-2">
+              <i class="fa-solid fa-play"></i>
+              <span>Jalankan Kod</span>
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- SECTION: LATIHAN 1 — BENGKEL -->
+      <section id="latihan1-section" class="content-section hidden space-y-6">
+        
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
+          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">🚗 Latihan 1 — Sistem Bengkel Kenderaan</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Sistem pendaftaran serviced kenderaan berasaskan input dan output.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Form Input Bengkel -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+            <h3 class="font-bold text-base text-navy-900 dark:text-white flex items-center">
+              <i class="fa-solid fa-clipboard-list text-blue-600 mr-2"></i> Borang Input Pelanggan
+            </h3>
+
+            <div class="space-y-3 text-xs">
+              <div>
+                <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Pelanggan:</label>
+                <input type="text" id="bengkelNama" value="Ahmad" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none">
+              </div>
+              <div>
+                <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Model Kereta:</label>
+                <input type="text" id="bengkelKereta" value="Honda City" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none">
+              </div>
+              <div>
+                <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Nombor Pendaftaran (Plat):</label>
+                <input type="text" id="bengkelPlat" value="VAB1234" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none">
+              </div>
+
+              <button onclick="generateBengkelRecord()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Generate Rekod</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Generated Record & Generated Python Code -->
+          <div class="space-y-4">
+            
+            <!-- Output Record -->
+            <div class="bg-slate-900 text-slate-100 rounded-2xl p-5 border border-slate-800 shadow">
+              <div class="text-xs font-bold text-amber-400 mb-2 uppercase tracking-wide border-b border-slate-800 pb-1">
+                HASIL OUTPUT REKOD SERVIS
+              </div>
+              <pre id="bengkelRecordDisplay" class="font-mono text-xs text-emerald-400 leading-relaxed whitespace-pre-wrap">----- MAKLUMAT SERVIS -----
+Pelanggan: Ahmad
+Kereta: Honda City
+No. Pendaftaran: VAB1234</pre>
+            </div>
+
+            <!-- Python Source Code Equivalent -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
+              <div class="text-xs font-bold text-blue-600 dark:text-blue-400 mb-2 uppercase tracking-wide">
+                Kod Python Yang Menghasilkan Rekod Di Atas:
+              </div>
+              <pre class="bg-slate-950 text-slate-200 p-3 rounded-xl text-xs font-mono overflow-x-auto leading-relaxed"><span class="text-blue-400">nama</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Nama pelanggan: "</span>)
+<span class="text-blue-400">kereta</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Model kereta: "</span>)
+<span class="text-blue-400">plat</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Nombor pendaftaran: "</span>)
+<span class="text-amber-300">print</span>(<span class="text-emerald-300">"----- MAKLUMAT SERVIS -----"</span>)
+<span class="text-amber-300">print</span>(<span class="text-emerald-300">"Pelanggan:"</span>, nama)
+<span class="text-amber-300">print</span>(<span class="text-emerald-300">"Kereta:"</span>, kereta)
+<span class="text-amber-300">print</span>(<span class="text-emerald-300">"No. Pendaftaran:"</span>, plat)</pre>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- SECTION: LATIHAN 2 — PROFIL PELAJAR -->
+      <section id="latihan2-section" class="content-section hidden space-y-6">
+        
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
+          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">🎓 Latihan 2 — Profil Pelajar</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Lengkapkan ruang kosong dalam kod Python berikut untuk menghasilkan Profil Pelajar sasaran.</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-6">
+          
+          <!-- Target Output -->
+          <div class="bg-blue-50 dark:bg-blue-950/40 p-4 rounded-xl border border-blue-200 dark:border-blue-900">
+            <div class="text-xs font-bold text-blue-800 dark:text-blue-300 uppercase mb-2">TARGET OUTPUT:</div>
+            <pre class="font-mono text-xs text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800">===== PROFIL PELAJAR =====
+Nama: Amirul
+Umur: 21
+Program: Information Technology
+CGPA Diploma: 3.68
+Universiti: MMU</pre>
+          </div>
+
+          <!-- Code Fill-in-the-Blanks Form -->
+          <div class="space-y-3">
+            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Pilih jawapan yang betul pada petak kosong (_____):</p>
+
+            <div class="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs leading-loose space-y-2 overflow-x-auto">
+              <div>
+                nama = 
+                <select id="blank1" class="bg-slate-800 text-amber-300 border border-slate-700 rounded px-2 py-1 focus:outline-none">
+                  <option value="">[ PILIH ]</option>
+                  <option value="print">print</option>
+                  <option value="input">input</option>
+                  <option value="nama">nama</option>
+                  <option value="umur">umur</option>
+                </select>("Masukkan nama: ")
+              </div>
+
+              <div>
+                umur = 
+                <select id="blank2" class="bg-slate-800 text-amber-300 border border-slate-700 rounded px-2 py-1 focus:outline-none">
+                  <option value="">[ PILIH ]</option>
+                  <option value="print">print</option>
+                  <option value="input">input</option>
+                  <option value="nama">nama</option>
+                  <option value="umur">umur</option>
+                </select>("Masukkan umur: ")
+              </div>
+
+              <div>
+                print("Nama:", 
+                <select id="blank3" class="bg-slate-800 text-amber-300 border border-slate-700 rounded px-2 py-1 focus:outline-none">
+                  <option value="">[ PILIH ]</option>
+                  <option value="print">print</option>
+                  <option value="input">input</option>
+                  <option value="nama">nama</option>
+                  <option value="umur">umur</option>
+                </select>)
+              </div>
+
+              <div>
+                print("Umur:", 
+                <select id="blank4" class="bg-slate-800 text-amber-300 border border-slate-700 rounded px-2 py-1 focus:outline-none">
+                  <option value="">[ PILIH ]</option>
+                  <option value="print">print</option>
+                  <option value="input">input</option>
+                  <option value="nama">nama</option>
+                  <option value="umur">umur</option>
+                </select>)
+              </div>
+            </div>
+          </div>
+
+          <!-- Buttons & Feedback -->
+          <div class="space-y-3">
+            <div class="flex items-center space-x-3">
+              <button onclick="checkLatihan2()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition">
+                ✅ Semak Jawapan
+              </button>
+              <button onclick="showLatihan2Hint()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs px-4 py-2.5 rounded-xl font-medium transition">
+                💡 Dapatkan Hint
+              </button>
+            </div>
+
+            <!-- Hint Display -->
+            <div id="latihan2HintBox" class="hidden p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-900 dark:text-amber-200 text-xs rounded-xl">
+              <strong>Hint:</strong> Gunakan <code>input</code> apabila meminta maklumat daripada pengguna, dan gunakan nama <code>variable</code> apabila hendak memaparkan isinya semula.
+            </div>
+
+            <!-- Feedback Display -->
+            <div id="latihan2Feedback" class="hidden p-3 rounded-xl text-xs font-bold"></div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- SECTION: MINI QUIZ -->
+      <section id="quiz-section" class="content-section hidden space-y-6">
+        
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
+          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">🧠 Mini Quiz Python</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Uji kefahaman anda secara berperingkat satu soalan pada satu masa.</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 max-w-2xl mx-auto">
+          
+          <!-- Quiz Active View -->
+          <div id="quizActiveContainer" class="space-y-6">
+            
+            <div class="flex justify-between items-center text-xs font-medium border-b border-slate-100 dark:border-slate-700 pb-3">
+              <span id="quizQuestionCount" class="text-blue-600 dark:text-blue-400 font-bold">Soalan 1 / 5</span>
+              <span id="quizScoreTracker" class="bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-full">Markah: 0</span>
+            </div>
+
+            <div class="space-y-4">
+              <h3 id="quizQuestionText" class="text-base font-bold text-navy-900 dark:text-white">
+                Loading soalan...
+              </h3>
+
+              <div id="quizOptionsContainer" class="space-y-2.5">
+                <!-- Dynamic options generated by JS -->
+              </div>
+            </div>
+
+            <div class="flex justify-between items-center pt-2">
+              <div class="text-xs text-slate-400 italic">Pilih satu jawapan tepat</div>
+              <button id="quizNextBtn" onclick="nextQuizQuestion()" disabled class="bg-blue-600 opacity-50 cursor-not-allowed hover:bg-blue-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition">
+                Seterusnya <i class="fa-solid fa-arrow-right ml-1"></i>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Quiz Result View -->
+          <div id="quizResultContainer" class="hidden text-center space-y-6 py-4">
+            
+            <div id="quizBadgeIcon" class="text-5xl mb-2">🏆</div>
+            
+            <div>
+              <h3 class="text-2xl font-black text-navy-900 dark:text-white mb-1">Keputusan Quiz Anda</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Syabas kerana menyelesaikan mini quiz ini!</p>
+            </div>
+
+            <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 max-w-xs mx-auto">
+              <div class="text-sm font-semibold text-slate-500 dark:text-slate-400">Markah Terkumpul:</div>
+              <div id="quizFinalMark" class="text-3xl font-black text-blue-600 dark:text-blue-400 my-1">4 / 5</div>
+              <div id="quizFinalPercent" class="text-lg font-bold text-emerald-500">80%</div>
+              <div id="quizStatusBadge" class="mt-3 inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">
+                ✅ Good
+              </div>
+            </div>
+
+            <button onclick="restartQuiz()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-3 rounded-xl shadow transition inline-flex items-center space-x-2">
+              <i class="fa-solid fa-rotate-right"></i>
+              <span>Ulang Quiz</span>
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- SECTION: TUGASAN HARI INI -->
+      <section id="tugasan-section" class="content-section hidden space-y-6">
+        
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
+          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">🚘 Tugasan Hari Ini — Program Rekod Kenderaan</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Bina program Python yang meminta 5 maklumat kenderaan dan memaparkannya semula.</p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-6">
+          
+          <div>
+            <h3 class="font-bold text-base text-navy-900 dark:text-white mb-2">Maklumat Yang Perlu Diminta Dari Pengguna:</h3>
+            <ul class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+              <li class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-center">1. Nama Pemilik</li>
+              <li class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-center">2. Model Kereta</li>
+              <li class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-center">3. Nombor Plat</li>
+              <li class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-center">4. Tahun Kereta</li>
+              <li class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg text-center">5. Mileage (KM)</li>
+            </ul>
+          </div>
+
+          <!-- Target Format Box -->
+          <div class="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs border border-slate-800">
+            <div class="text-amber-400 font-bold mb-1">TARGET OUTPUT SAMBILAN:</div>
+            <pre class="text-emerald-400">========== REKOD KENDERAAN ==========
+Pemilik: Ahmad
+Model: Honda City
+No. Plat: VAB1234
+Tahun: 2022
+Mileage: 45000 KM
+======================================</pre>
+          </div>
+
+          <!-- Hints Section -->
+          <div class="space-y-3 border-t border-slate-200 dark:border-slate-700 pt-4">
+            <div class="font-bold text-xs text-slate-700 dark:text-slate-300">Tahap Bantuan / Hint Pembelajaran:</div>
+            
+            <div class="flex flex-wrap gap-2">
+              <button onclick="toggleHint(1)" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs px-3 py-1.5 rounded-lg font-medium transition">
+                💡 Hint 1
+              </button>
+              <button onclick="toggleHint(2)" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs px-3 py-1.5 rounded-lg font-medium transition">
+                💡 Hint 2
+              </button>
+              <button onclick="toggleHint(3)" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs px-3 py-1.5 rounded-lg font-medium transition">
+                💡 Hint 3
+              </button>
+            </div>
+
+            <!-- Hint Text Areas -->
+            <div id="hintBox1" class="hidden p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-900 dark:text-amber-200 text-xs rounded-xl">
+              <strong>Hint 1:</strong> Gunakan fungsi <code>input()</code> untuk meminta setiap maklumat.
+            </div>
+            <div id="hintBox2" class="hidden p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-900 dark:text-amber-200 text-xs rounded-xl">
+              <strong>Hint 2:</strong> Simpan setiap maklumat input dalam variable tersendiri seperti <code>pemilik = input(...)</code>.
+            </div>
+            <div id="hintBox3" class="hidden p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-900 dark:text-amber-200 text-xs rounded-xl">
+              <strong>Hint 3:</strong> Gunakan fungsi <code>print()</code> untuk memaparkan semula maklumat dalam format rapi.
+            </div>
+          </div>
+
+          <!-- Answer Toggle -->
+          <div class="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <button onclick="toggleTugasanAnswer()" class="bg-navy-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center space-x-2">
+                <i class="fa-solid fa-eye"></i>
+                <span id="answerBtnText">Lihat Jawapan Kod Lengkap</span>
+              </button>
+
+              <button onclick="markTaskCompleted('tugasan', 30)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition">
+                ✅ Complete Tugasan (+30 XP)
+              </button>
+            </div>
+
+            <div id="tugasanAnswerCode" class="hidden bg-slate-950 text-slate-100 p-4 rounded-xl font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800">
+              <div class="text-slate-400 text-[10px] mb-2 border-b border-slate-800 pb-1">CONTOH KOD JAWAPAN LENGKAP:</div>
+              <span class="text-blue-400">pemilik</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Nama pemilik: "</span>)<br>
+              <span class="text-blue-400">model</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Model kereta: "</span>)<br>
+              <span class="text-blue-400">plat</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Nombor plat: "</span>)<br>
+              <span class="text-blue-400">tahun</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Tahun kereta: "</span>)<br>
+              <span class="text-blue-400">mileage</span> = <span class="text-amber-300">input</span>(<span class="text-emerald-300">"Mileage: "</span>)<br><br>
+              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"========== REKOD KENDERAAN =========="</span>)<br>
+              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"Pemilik:"</span>, pemilik)<br>
+              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"Model:"</span>, model)<br>
+              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"No. Plat:"</span>, plat)<br>
+              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"Tahun:"</span>, tahun)<br>
+              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"Mileage:"</span>, mileage, <span class="text-emerald-300">"KM"</span>)<br>
+              <span class="text-amber-300">print</span>(<span class="text-emerald-300">"======================================"</span>)
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- SECTION: PROGRESS SAYA -->
+      <section id="progress-section" class="content-section hidden space-y-6">
+        
+        <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
+          <h2 class="text-2xl font-bold text-navy-900 dark:text-white">📊 Semakan Progress Pembelajaran</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Status penyelesaian senarai tugasan modul Minggu 1 - Isnin.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Summary Card -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Ringkasan Modul</h3>
+              <div id="trackerTasksText" class="text-2xl font-black text-navy-900 dark:text-white mb-1">0 / 9 Selesai</div>
+              <div id="trackerPercentText" class="text-lg font-bold text-emerald-500">0% COMPLETE</div>
+            </div>
+
+            <div class="mt-6 space-y-2">
+              <button onclick="resetAllProgress()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-900 text-xs py-2 rounded-xl font-bold transition">
+                🔄 Reset Semua Progress
+              </button>
+            </div>
+          </div>
+
+          <!-- Checklist -->
+          <div class="md:col-span-2 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
+            <h3 class="font-bold text-base text-navy-900 dark:text-white mb-2">Senarai Semak (Checklist):</h3>
+
+            <div id="checklistItems" class="space-y-2 text-xs">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- FOOTER -->
+      <footer class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1 pb-6">
+        <p class="font-bold text-slate-700 dark:text-slate-300">MMU IT Prep Learning System</p>
+        <p>Preparation Program for Information Technology</p>
+        <p class="text-[10px] text-slate-400">Dibangunkan khusus untuk tujuan pembelajaran interaktif pelajar sifar pengaturcaraan.</p>
+      </footer>
+
+    </main>
+
+  </div>
+
+  <!-- TOAST / MODAL FEEDBACK NOTIFICATION -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div id="toastContent" class="bg-navy-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center space-x-3 text-xs">
+      <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+      <span id="toastMessage">Mesej Notifikasi</span>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // INITIAL SYSTEM STATE
+    const INITIAL_STATE = {
+      xp: 0,
+      tasks: {
+        faham_python: false,
+        faham_variable: false,
+        faham_input: false,
+        faham_output: false,
+        demo_code: false,
+        latihan_1: false,
+        latihan_2: false,
+        mini_quiz: false,
+        tugasan: false
+      }
+    };
+
+    let state = JSON.parse(localStorage.getItem('mmu_python_prep_state')) || INITIAL_STATE;
+
+    const TASK_KEYS = [
+      { id: 'faham_python', label: 'Faham Python (Nota 1)', xp: 5 },
+      { id: 'faham_variable', label: 'Faham Variable (Nota 2)', xp: 5 },
+      { id: 'faham_input', label: 'Faham Input (Nota 3)', xp: 5 },
+      { id: 'faham_output', label: 'Faham Output', xp: 5 },
+      { id: 'demo_code', label: 'Selesai Demo Code Lab', xp: 10 },
+      { id: 'latihan_1', label: 'Selesai Latihan 1 (Bengkel)', xp: 15 },
+      { id: 'latihan_2', label: 'Selesai Latihan 2 (Profil)', xp: 15 },
+      { id: 'mini_quiz', label: 'Selesai Mini Quiz', xp: 20 },
+      { id: 'tugasan', label: 'Selesai Tugasan Hari Ini', xp: 30 }
+    ];
+
+    // QUIZ DATA
+    const QUIZ_QUESTIONS = [
+      {
+        q: "Apakah fungsi print()?",
+        options: ["Menyimpan data", "Memaparkan output", "Memadam data"],
+        ans: 1
+      },
+      {
+        q: "Apakah fungsi input()?",
+        options: ["Menerima maklumat pengguna", "Membuat calculation", "Menutup program"],
+        ans: 0
+      },
+      {
+        q: "Penamaan variable yang BETUL ialah:",
+        options: ["harga servis = 100", "2harga = 100", "harga_servis = 100"],
+        ans: 2
+      },
+      {
+        q: "Apakah output bagi kod berikut?\n\nnama = \"Ali\"\nprint(\"Hello\", nama)",
+        options: ["Hello", "Ali", "Hello Ali", "Error"],
+        ans: 2
+      },
+      {
+        q: "Lengkapkan kod berikut:\n\nkereta = ______(\"Masukkan model kereta: \")",
+        options: ["print", "input", "variable", "output"],
+        ans: 1
+      }
+    ];
+
+    let currentQuizIndex = 0;
+    let quizScore = 0;
+    let selectedOptionIndex = null;
+
+    // ON DOM LOAD INITIALIZATION
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      initNavigation();
+      initMobileMenu();
+      updateProgressUI();
+      renderChecklist();
+      initQuiz();
+    });
+
+    // SAVE STATE TO LOCALSTORAGE
+    function saveState() {
+      localStorage.setItem('mmu_python_prep_state', JSON.stringify(state));
+      updateProgressUI();
+      renderChecklist();
+    }
+
+    // THEME SETUP
+    function initTheme() {
+      const themeBtn = document.getElementById('themeToggleBtn');
+      themeBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+      });
+    }
+
+    // NAVIGATION TABS SETUP
+    function initNavigation() {
+      const navLinks = document.querySelectorAll('.nav-item');
+      const sections = document.querySelectorAll('.content-section');
+
+      function navigateTo(targetHash) {
+        const cleanHash = targetHash || '#dashboard';
+        const sectionId = cleanHash.substring(1) + '-section';
+
+        sections.forEach(sec => sec.classList.add('hidden'));
+        const targetSec = document.getElementById(sectionId) || document.getElementById('dashboard-section');
+        if (targetSec) targetSec.classList.remove('hidden');
+
+        navLinks.forEach(link => {
+          if (link.getAttribute('href') === cleanHash) {
+            link.classList.add('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-slate-700');
+            link.classList.remove('text-slate-600', 'dark:text-slate-300');
+          } else {
+            link.classList.remove('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-slate-700');
+            link.classList.add('text-slate-600', 'dark:text-slate-300');
+          }
+        });
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Close sidebar on mobile after navigating
+        document.getElementById('sidebar').classList.add('-translate-x-full');
+        document.getElementById('sidebarOverlay').classList.add('hidden');
+      }
+
+      navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = link.getAttribute('href');
+          window.location.hash = target;
+          navigateTo(target);
+        });
+      });
+
+      if (window.location.hash) {
+        navigateTo(window.location.hash);
+      }
+    }
+
+    // MOBILE MENU SIDEBAR TOGGLE
+    function initMobileMenu() {
+      const btn = document.getElementById('mobileMenuBtn');
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+
+      btn.addEventListener('click', () => {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+      });
+
+      overlay.addEventListener('click', () => {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+      });
+    }
+
+    // UPDATE UI PROGRESS & XP
+    function updateProgressUI() {
+      const totalTasks = TASK_KEYS.length;
+      let completedCount = 0;
+
+      TASK_KEYS.forEach(task => {
+        if (state.tasks[task.id]) completedCount++;
+      });
+
+      const percentage = Math.round((completedCount / totalTasks) * 100);
+
+      // Top bar elements
+      document.getElementById('headerXp').textContent = `${state.xp} XP`;
+      document.getElementById('headerLevel').textContent = getLevelTitle(state.xp);
+      document.getElementById('headerProgressPercent').textContent = `${percentage}%`;
+      document.getElementById('headerProgressBar').style.width = `${percentage}%`;
+
+      // Mobile elements
+      document.getElementById('mobileProgressPercent').textContent = `${percentage}%`;
+      document.getElementById('mobileProgressBar').style.width = `${percentage}%`;
+
+      // Dashboard card elements
+      document.getElementById('dashProgressText').textContent = `${percentage}%`;
+      document.getElementById('dashProgressBar').style.width = `${percentage}%`;
+
+      // Progress tracker view elements
+      document.getElementById('trackerTasksText').textContent = `${completedCount} / ${totalTasks} Selesai`;
+      document.getElementById('trackerPercentText').textContent = `${percentage}% COMPLETE`;
+
+      // Trigger celebration confetti if 100% completed first time
+      if (percentage === 100 && !state.celebrated) {
+        state.celebrated = true;
+        saveState();
+        triggerConfetti();
+        showToast('🎉 Tahniah! Anda sudah melengkapkan 100% modul Hari Isnin!');
+      }
+    }
+
+    function getLevelTitle(xp) {
+      if (xp >= 100) return 'Python Rookie 🚀';
+      if (xp >= 61) return 'Coder 💻';
+      if (xp >= 31) return 'Explorer 🔍';
+      return 'Beginner 🐣';
+    }
+
+    function markTaskCompleted(taskId, xpReward) {
+      if (!state.tasks[taskId]) {
+        state.tasks[taskId] = true;
+        state.xp += xpReward;
+        saveState();
+        showToast(`✅ Tugasan diselesaikan! +${xpReward} XP`);
+      } else {
+        showToast(`i Anda sudah menyelesaikan bahagian ini sebelumnya.`);
+      }
+    }
+
+    function renderChecklist() {
+      const container = document.getElementById('checklistItems');
+      container.innerHTML = '';
+
+      TASK_KEYS.forEach(task => {
+        const isDone = state.tasks[task.id];
+        const item = document.createElement('div');
+        item.className = `p-3 rounded-xl border flex items-center justify-between transition ${
+          isDone 
+            ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50 text-emerald-900 dark:text-emerald-200' 
+            : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+        }`;
+
+        item.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <i class="${isDone ? 'fa-solid fa-circle-check text-emerald-500 text-base' : 'fa-regular fa-circle text-slate-400 text-base'}"></i>
+            <span class="font-medium">${task.label}</span>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isDone ? 'bg-emerald-200 text-emerald-800' : 'bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-300'}">
+            +${task.xp} XP
+          </span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function resetAllProgress() {
+      if (confirm('Adakah anda pasti mahu mereset semua markah dan progress anda?')) {
+        state = JSON.parse(JSON.stringify(INITIAL_STATE));
+        saveState();
+        showToast('🔄 Progress anda telah direset.');
+      }
+    }
+
+    // NOTA DEMO 1
+    function runDemo1() {
+      document.getElementById('demo1Output').textContent = 'Hello World';
+      markTaskCompleted('faham_python', 5);
+      markTaskCompleted('faham_output', 5);
+    }
+
+    // INPUT SIMULATOR
+    function runInputSimulator() {
+      const val = document.getElementById('simInputName').value || 'Pelajar';
+      document.getElementById('simOutputText').textContent = `Selamat datang ${val}`;
+      markTaskCompleted('faham_input', 5);
+    }
+
+    // TEXT-TO-SPEECH (SPEECH SYNTHESIS)
+    function readText(elementId) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // stop current speech
+        const text = document.getElementById(elementId).innerText;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ms-MY';
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+        showToast('🔊 Membaca nota...');
+      } else {
+        showToast('⚠️ Pelayar anda tidak menyokong fungsi Text-to-Speech.');
+      }
+    }
+
+    // CODE LAB SIMULATOR
+    function runCodeLab() {
+      const code = document.getElementById('labCodeArea').value;
+      const inputVal = document.getElementById('labInputValue').value || 'Amirul';
+      const outputElem = document.getElementById('labTerminalOutput');
+
+      outputElem.innerHTML = '';
+
+      // Simulate output line by line
+      let simulatedOutput = '';
+      if (code.includes('input(')) {
+        simulatedOutput += `<div class="text-slate-400">Masukkan nama: <span class="text-amber-300 font-bold">${inputVal}</span></div>`;
+      }
+      if (code.includes('print(')) {
+        simulatedOutput += `<div class="text-emerald-400 font-bold">Selamat datang ${inputVal}</div>`;
+      }
+
+      if (!simulatedOutput) {
+        simulatedOutput = `<div class="text-rose-400">Error / Tiada fungsi print() ditemui.</div>`;
+      }
+
+      outputElem.innerHTML = simulatedOutput;
+      markTaskCompleted('demo_code', 10);
+    }
+
+    // LATIHAN 1: BENGKEL RECORD GENERATOR
+    function generateBengkelRecord() {
+      const nama = document.getElementById('bengkelNama').value || 'Ahmad';
+      const kereta = document.getElementById('bengkelKereta').value || 'Honda City';
+      const plat = document.getElementById('bengkelPlat').value || 'VAB1234';
+
+      const recordText = `----- MAKLUMAT SERVIS -----\nPelanggan: ${nama}\nKereta: ${kereta}\nNo. Pendaftaran: ${plat}`;
+      
+      document.getElementById('bengkelRecordDisplay').textContent = recordText;
+      markTaskCompleted('latihan_1', 15);
+    }
+
+    // LATIHAN 2: PROFIL CHECKER
+    function checkLatihan2() {
+      const b1 = document.getElementById('blank1').value;
+      const b2 = document.getElementById('blank2').value;
+      const b3 = document.getElementById('blank3').value;
+      const b4 = document.getElementById('blank4').value;
+
+      const feedback = document.getElementById('latihan2Feedback');
+      feedback.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800');
+
+      if (b1 === 'input' && b2 === 'input' && b3 === 'nama' && b4 === 'umur') {
+        feedback.classList.add('bg-emerald-100', 'text-emerald-800');
+        feedback.textContent = '✅ Bagus! Jawapan anda betul sepenuhnya.';
+        markTaskCompleted('latihan_2', 15);
+      } else {
+        feedback.classList.add('bg-rose-100', 'text-rose-800');
+        feedback.textContent = '❌ Cuba lagi. Perhatikan fungsi input() dan pembolehubah yang betul.';
+      }
+    }
+
+    function showLatihan2Hint() {
+      document.getElementById('latihan2HintBox').classList.toggle('hidden');
+    }
+
+    // MINI QUIZ LOGIC
+    function initQuiz() {
+      currentQuizIndex = 0;
+      quizScore = 0;
+      selectedOptionIndex = null;
+      renderQuizQuestion();
+    }
+
+    function renderQuizQuestion() {
+      const qData = QUIZ_QUESTIONS[currentQuizIndex];
+      document.getElementById('quizQuestionCount').textContent = `Soalan ${currentQuizIndex + 1} / ${QUIZ_QUESTIONS.length}`;
+      document.getElementById('quizScoreTracker').textContent = `Markah: ${quizScore}`;
+      document.getElementById('quizQuestionText').innerText = qData.q;
+
+      const optionsContainer = document.getElementById('quizOptionsContainer');
+      optionsContainer.innerHTML = '';
+
+      qData.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left p-3 rounded-xl border text-xs font-medium transition flex items-center justify-between ${
+          selectedOptionIndex === idx 
+            ? 'bg-blue-100 border-blue-500 text-blue-900 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-400' 
+            : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
+        }`;
+        btn.innerHTML = `
+          <span>${String.fromCharCode(65 + idx)}. ${opt}</span>
+          <i class="${selectedOptionIndex === idx ? 'fa-solid fa-circle-dot text-blue-600' : 'fa-regular fa-circle text-slate-400'}"></i>
+        `;
+        btn.onclick = () => selectQuizOption(idx);
+        optionsContainer.appendChild(btn);
+      });
+
+      const nextBtn = document.getElementById('quizNextBtn');
+      if (selectedOptionIndex !== null) {
+        nextBtn.disabled = false;
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      } else {
+        nextBtn.disabled = true;
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    function selectQuizOption(idx) {
+      selectedOptionIndex = idx;
+      renderQuizQuestion();
+    }
+
+    function nextQuizQuestion() {
+      const qData = QUIZ_QUESTIONS[currentQuizIndex];
+      if (selectedOptionIndex === qData.ans) {
+        quizScore++;
+      }
+
+      selectedOptionIndex = null;
+      currentQuizIndex++;
+
+      if (currentQuizIndex < QUIZ_QUESTIONS.length) {
+        renderQuizQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function finishQuiz() {
+      document.getElementById('quizActiveContainer').classList.add('hidden');
+      const resultContainer = document.getElementById('quizResultContainer');
+      resultContainer.classList.remove('hidden');
+
+      const total = QUIZ_QUESTIONS.length;
+      const percentage = Math.round((quizScore / total) * 100);
+
+      document.getElementById('quizFinalMark').textContent = `${quizScore} / ${total}`;
+      document.getElementById('quizFinalPercent').textContent = `${percentage}%`;
+
+      const badgeElem = document.getElementById('quizStatusBadge');
+      const iconElem = document.getElementById('quizBadgeIcon');
+
+      if (percentage >= 90) {
+        badgeElem.className = 'mt-3 inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-300';
+        badgeElem.textContent = '🏆 Excellent';
+        iconElem.textContent = '🏆';
+      } else if (percentage >= 70) {
+        badgeElem.className = 'mt-3 inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300';
+        badgeElem.textContent = '✅ Good';
+        iconElem.textContent = '🌟';
+      } else if (percentage >= 50) {
+        badgeElem.className = 'mt-3 inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-300';
+        badgeElem.textContent = '🟡 Perlu Ulang Kaji';
+        iconElem.textContent = '📖';
+      } else {
+        badgeElem.className = 'mt-3 inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800 border border-rose-300';
+        badgeElem.textContent = '🔴 Cuba Lagi';
+        iconElem.textContent = '💪';
+      }
+
+      markTaskCompleted('mini_quiz', 20);
+    }
+
+    function restartQuiz() {
+      document.getElementById('quizResultContainer').classList.add('hidden');
+      document.getElementById('quizActiveContainer').classList.remove('hidden');
+      initQuiz();
+    }
+
+    // TUGASAN HINTS & ANSWER TOGGLES
+    function toggleHint(level) {
+      const elem = document.getElementById(`hintBox${level}`);
+      if (elem) elem.classList.toggle('hidden');
+    }
+
+    function toggleTugasanAnswer() {
+      const codeArea = document.getElementById('tugasanAnswerCode');
+      const btnText = document.getElementById('answerBtnText');
+
+      if (codeArea.classList.contains('hidden')) {
+        codeArea.classList.remove('hidden');
+        btnText.textContent = 'Sembunyikan Jawapan';
+      } else {
+        codeArea.classList.add('hidden');
+        btnText.textContent = 'Lihat Jawapan Kod Lengkap';
+      }
+    }
+
+    // CONFETTI ANIMATION EFFECT
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 120,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    // TOAST NOTIFICATION FUNCTION
+    function showToast(message) {
+      const toast = document.getElementById('toastNotification');
+      const msgElem = document.getElementById('toastMessage');
+
+      msgElem.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
